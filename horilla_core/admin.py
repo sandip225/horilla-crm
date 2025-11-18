@@ -33,6 +33,7 @@ admin.site.register(RecentlyViewed)
 admin.site.register(ImportHistory)
 admin.site.register(HorillaAttachment)
 admin.site.register(ExportSchedule)
+admin.site.register(FieldPermission)
 
 
 @admin.register(HorillaUser)

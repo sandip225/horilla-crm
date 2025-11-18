@@ -5,9 +5,9 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission
+from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.db import models
-from django.db.models import CharField, Q, TextField
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -19,7 +19,7 @@ from django.views.generic import TemplateView
 
 from horilla.registry.permission_registry import PERMISSION_EXEMPT_MODELS
 from horilla_core.decorators import htmx_required, permission_required_or_denied
-from horilla_core.models import HorillaUser, Role
+from horilla_core.models import FieldPermission, HorillaUser, Role
 from horilla_generics.views import HorillaListView, HorillaTabView
 
 
@@ -109,6 +109,7 @@ class PermissionUtils:
                     "verbose_name": model._meta.verbose_name.title(),
                     "verbose_name_plural": model._meta.verbose_name_plural.title(),
                     "permissions": permissions,
+                    "is_managed": model._meta.managed,
                 }
                 if user or role:
                     all_permissions_checked = True
@@ -131,6 +132,418 @@ class PermissionUtils:
                     )
                 all_models.append(model_data)
         return sorted(all_models, key=lambda m: (m["app_label"], m["model_name"]))
+
+
+@method_decorator(htmx_required, name="dispatch")
+@method_decorator(
+    permission_required_or_denied(
+        [
+            "auth.view_permission",
+            "auth.view_group",
+            "auth.change_permission",
+            "auth.change_group",
+        ]
+    ),
+    name="dispatch",
+)
+class ModelFieldsModalView(LoginRequiredMixin, TemplateView):
+    """
+    View to display model fields in a modal for field-level permissions
+    Supports both role-based and user-based contexts
+    """
+
+    template_name = "permissions/field_permissions_modal.html"
+
+    def get(self, request, app_label, model_name, *args, **kwargs):
+
+        role_id = kwargs.get("role_id")
+        user_id = kwargs.get("user_id")
+        context_type = request.GET.get("context", "role")
+
+        selected_user_ids = None
+        selected_users_count = 0
+        if context_type == "bulk":
+            user_ids_str = request.GET.get("selected_user_ids", "")
+            if user_ids_str:
+                try:
+                    selected_user_ids = [
+                        int(uid.strip())
+                        for uid in user_ids_str.split(",")
+                        if uid.strip()
+                    ]
+                    selected_users_count = len(selected_user_ids)
+                except (ValueError, AttributeError):
+                    selected_user_ids = None
+
+        role = None
+        user = None
+
+        if role_id:
+            try:
+                role = get_object_or_404(Role, id=role_id)
+            except:
+                messages.error(request, _("Role does not exist"))
+                return HttpResponse("<script>$('#reloadButton').click();</script>")
+
+        if user_id:
+            try:
+                user = get_object_or_404(HorillaUser, id=user_id)
+            except:
+                messages.error(request, _("User does not exist"))
+                return HttpResponse("<script>$('#reloadButton').click();</script>")
+
+        try:
+            model = apps.get_model(app_label, model_name)
+        except LookupError:
+            messages.error(request, _("Model not found"))
+            return HttpResponse("")
+
+        if not model._meta.managed:
+            messages.info(
+                request, _("Field-level permissions are not available for this model.")
+            )
+            return HttpResponse(
+                "<script>closeModal(); $('#reloadButton').click();$('#reloadMessagesButton').click();</script>"
+            )
+
+        content_type = ContentType.objects.get_for_model(model)
+
+        existing_permissions = {}
+        role_inherited_permissions = {}
+
+        if role:
+            field_perms = FieldPermission.objects.filter(
+                role=role, content_type=content_type
+            )
+            for perm in field_perms:
+                existing_permissions[perm.field_name] = perm.permission_type
+
+        elif user:
+            user_field_perms = FieldPermission.objects.filter(
+                user=user, content_type=content_type
+            )
+            for perm in user_field_perms:
+                existing_permissions[perm.field_name] = perm.permission_type
+
+            if hasattr(user, "role") and user.role:
+                role_field_perms = FieldPermission.objects.filter(
+                    role=user.role, content_type=content_type
+                )
+                for perm in role_field_perms:
+                    role_inherited_permissions[perm.field_name] = perm.permission_type
+                    if perm.field_name not in existing_permissions:
+                        existing_permissions[perm.field_name] = perm.permission_type
+
+        allowed_fields = getattr(model, "field_permissions", None)
+        fields = []
+
+        for field in model._meta.get_fields():
+            if field.many_to_many or field.one_to_many or field.one_to_one:
+                continue
+
+            field_name = field.name
+
+            if allowed_fields is not None and field_name not in allowed_fields:
+                continue
+
+            verbose_name = getattr(field, "verbose_name", field_name).title()
+            current_permission = existing_permissions.get(field_name, "readwrite")
+
+            fields.append(
+                {
+                    "name": field_name,
+                    "verbose_name": verbose_name,
+                    "field_type": field.__class__.__name__,
+                    "current_permission": current_permission,
+                }
+            )
+
+        context = {
+            "role": role,
+            "user": user,
+            "model": model,
+            "model_name": model_name,
+            "app_label": app_label,
+            "verbose_name": model._meta.verbose_name.title(),
+            "fields": fields,
+            "context_type": context_type,
+            "role_id": role_id,
+            "user_id": user_id,
+            "is_bulk": context_type == "bulk",
+            "selected_user_ids": (
+                ",".join(map(str, selected_user_ids)) if selected_user_ids else ""
+            ),
+            "selected_users_count": selected_users_count,
+        }
+
+        return HttpResponse(render_to_string(self.template_name, context, request))
+
+
+@method_decorator(htmx_required, name="dispatch")
+@method_decorator(
+    permission_required_or_denied(
+        [
+            "auth.view_permission",
+            "auth.view_group",
+            "auth.change_permission",
+            "auth.change_group",
+        ]
+    ),
+    name="dispatch",
+)
+class SaveBulkFieldPermissionsView(LoginRequiredMixin, View):
+    """
+    Save field permissions for multiple users at once (bulk assignment)
+    """
+
+    def post(self, request, *args, **kwargs):
+
+        user_ids_str = request.POST.get("user_ids", "")
+        if not user_ids_str:
+            messages.error(
+                request, _("No users selected. Please select at least one user.")
+            )
+            return HttpResponse(
+                "<script>closeModal(); $('#reloadMessagesButton').click();</script>"
+            )
+
+        try:
+            user_ids = [
+                int(uid.strip()) for uid in user_ids_str.split(",") if uid.strip()
+            ]
+        except (ValueError, AttributeError):
+            messages.error(request, _("Invalid user selection."))
+            return HttpResponse(
+                "<script>closeModal(); $('#reloadMessagesButton').click();</script>"
+            )
+
+        if not user_ids:
+            messages.error(request, _("Please select at least one user."))
+            return HttpResponse(
+                "<script>closeModal(); $('#reloadMessagesButton').click();</script>"
+            )
+
+        app_label = request.POST.get("app_label")
+        model_name = request.POST.get("model_name")
+
+        try:
+            model = apps.get_model(app_label, model_name)
+            content_type = ContentType.objects.get_for_model(model)
+        except LookupError:
+            messages.error(request, _("Model not found"))
+            return HttpResponse(
+                "<script>closeModal(); $('#reloadMessagesButton').click();</script>"
+            )
+
+        field_permissions = {}
+        for key, value in request.POST.items():
+            if key.startswith("field-"):
+                field_name = key.replace("field-", "")
+                field_permissions[field_name] = value
+
+        if not field_permissions:
+            messages.warning(request, _("No field permissions to save."))
+            return HttpResponse(
+                "<script>closeModal(); $('#reloadMessagesButton').click();</script>"
+            )
+
+        try:
+            users = HorillaUser.objects.filter(id__in=user_ids, is_superuser=False)
+
+            if not users.exists():
+                messages.error(request, _("No valid users found."))
+                return HttpResponse(
+                    "<script>closeModal(); $('#reloadMessagesButton').click();</script>"
+                )
+
+            for user in users:
+                for field_name, permission_type in field_permissions.items():
+                    FieldPermission.objects.update_or_create(
+                        user=user,
+                        content_type=content_type,
+                        field_name=field_name,
+                        defaults={"permission_type": permission_type},
+                    )
+
+            messages.success(
+                request,
+                _(
+                    "Successfully saved {count} field permission(s) for {user_count} user(s) on {model}."
+                ).format(
+                    count=len(field_permissions),
+                    user_count=users.count(),
+                    model=model._meta.verbose_name.title(),
+                ),
+            )
+
+            return HttpResponse(
+                "<script>closeModal(); $('#reloadMessagesButton').click();</script>"
+            )
+
+        except Exception as e:
+            messages.error(
+                request,
+                _("Error saving field permissions: {error}").format(error=str(e)),
+            )
+            return HttpResponse(
+                "<script>closeModal(); $('#reloadMessagesButton').click();</script>"
+            )
+
+
+@method_decorator(htmx_required, name="dispatch")
+@method_decorator(
+    permission_required_or_denied(
+        [
+            "auth.view_permission",
+            "auth.view_group",
+            "auth.change_permission",
+            "auth.change_group",
+        ]
+    ),
+    name="dispatch",
+)
+class UpdateFieldPermissionView(LoginRequiredMixin, View):
+    """
+    Update field-level permission for a user or role
+    """
+
+    def post(self, request, *args, **kwargs):
+
+        role_id = kwargs.get("role_id")
+        user_id = kwargs.get("user_id")
+        app_label = kwargs.get("app_label")
+        model_name = kwargs.get("model_name")
+        field_name = kwargs.get("field_name")
+        permission_type = request.POST.get("permission_type")
+
+        if not permission_type in ["readonly", "readwrite", "hidden"]:
+            return JsonResponse(
+                {"success": False, "message": "Invalid permission type"}
+            )
+
+        try:
+            model = apps.get_model(app_label, model_name)
+            content_type = ContentType.objects.get_for_model(model)
+        except LookupError:
+            return JsonResponse({"success": False, "message": "Model not found"})
+
+        try:
+            if role_id:
+                role = get_object_or_404(Role, id=role_id)
+                field_perm, created = FieldPermission.objects.update_or_create(
+                    role=role,
+                    content_type=content_type,
+                    field_name=field_name,
+                    defaults={"permission_type": permission_type},
+                )
+                target_name = role.role_name
+            elif user_id:
+                user = get_object_or_404(HorillaUser, id=user_id)
+                field_perm, created = FieldPermission.objects.update_or_create(
+                    user=user,
+                    content_type=content_type,
+                    field_name=field_name,
+                    defaults={"permission_type": permission_type},
+                )
+                target_name = user.get_full_name()
+            else:
+                return JsonResponse(
+                    {
+                        "success": False,
+                        "message": "Either role_id or user_id must be provided",
+                    }
+                )
+
+            action = "created" if created else "updated"
+            messages.success(
+                request,
+                f"Field permission for '{field_name}' {action} successfully for {target_name}",
+            )
+
+        except Exception as e:
+            return JsonResponse(
+                {"success": False, "message": f"Error updating permission: {str(e)}"}
+            )
+
+
+@method_decorator(htmx_required, name="dispatch")
+@method_decorator(
+    permission_required_or_denied(
+        [
+            "auth.view_permission",
+            "auth.view_group",
+            "auth.change_permission",
+            "auth.change_group",
+        ]
+    ),
+    name="dispatch",
+)
+class SaveAllFieldPermissionsView(LoginRequiredMixin, View):
+    """
+    Save all field permissions at once when user clicks 'Save Changes'
+    """
+
+    def post(self, request, *args, **kwargs):
+
+        role_id = kwargs.get("role_id")
+        user_id = kwargs.get("user_id")
+        app_label = request.POST.get("app_label")
+        model_name = request.POST.get("model_name")
+
+        try:
+            model = apps.get_model(app_label, model_name)
+            content_type = ContentType.objects.get_for_model(model)
+        except LookupError:
+            messages.error(request, _("Model not found"))
+            return HttpResponse("<script>closeModal();</script>")
+
+        field_permissions = {}
+        for key, value in request.POST.items():
+            if key.startswith("field-"):
+                field_name = key.replace("field-", "")
+                field_permissions[field_name] = value
+
+        try:
+            saved_count = 0
+            if role_id:
+                role = get_object_or_404(Role, id=role_id)
+                for field_name, permission_type in field_permissions.items():
+                    FieldPermission.objects.update_or_create(
+                        role=role,
+                        content_type=content_type,
+                        field_name=field_name,
+                        defaults={"permission_type": permission_type},
+                    )
+                    saved_count += 1
+                target_name = role.role_name
+
+            elif user_id:
+                user = get_object_or_404(HorillaUser, id=user_id)
+                for field_name, permission_type in field_permissions.items():
+                    FieldPermission.objects.update_or_create(
+                        user=user,
+                        content_type=content_type,
+                        field_name=field_name,
+                        defaults={"permission_type": permission_type},
+                    )
+                    saved_count += 1
+                target_name = user.get_full_name()
+            else:
+                messages.error(request, _("Either role or user must be specified"))
+                return HttpResponse("<script>closeModal();</script>")
+
+            messages.success(
+                request,
+                f"Successfully saved {saved_count} field permissions for {target_name}",
+            )
+
+            return HttpResponse(
+                "<script>closeModal(); $('#reloadButton').click();$('#reloadMessagesButton').click();</script>"
+            )
+
+        except Exception as e:
+            messages.error(request, f"Error saving field permissions: {str(e)}")
+            return HttpResponse("<script>closeModal();</script>")
 
 
 @method_decorator(
@@ -249,6 +662,7 @@ class RolePermissionsView(LoginRequiredMixin, TemplateView):
         context["role"] = role
         context["role_id"] = role_id
         context["all_models"] = PermissionUtils.get_all_models_data(role=role)
+
         return context
 
 

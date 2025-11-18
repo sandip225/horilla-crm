@@ -890,3 +890,14 @@ def remove_query_param(url, param):
     new_query = urlencode(query_params, doseq=True)
     cleaned_url = urlunparse(parsed_url._replace(query=new_query))
     return cleaned_url
+
+
+@register.filter
+def get_field_permission(field_permissions, field_name):
+    """
+    Get field permission from the permissions dict
+    Returns the permission type or 'readwrite' as default
+    """
+    if not field_permissions:
+        return "readwrite"
+    return field_permissions.get(field_name, "readwrite")

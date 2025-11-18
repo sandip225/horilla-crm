@@ -150,6 +150,14 @@ class CampaignMember(HorillaCoreModel):
             return f"{self.contact} in {self.campaign}"
         return f"Unknown member in {self.campaign}"
 
+    field_permissions = [
+        "campaign",
+        "lead",
+        "contact",
+        "member_type",
+        "member_status",
+    ]
+
     class Meta:
         """
         Meta class for CampaignMember model
@@ -330,6 +338,18 @@ class Campaign(HorillaCoreModel):
         "actual_cost",
         "value_opportunities",
         "value_won_opportunities",
+    ]
+
+    field_permissions = [
+        "campaign_name",
+        "campaign_owner",
+        "status",
+        "campaign_type",
+        "start_date",
+        "end_date",
+        "expected_revenue",
+        "budget_cost",
+        "description",
     ]
 
     def __str__(self):

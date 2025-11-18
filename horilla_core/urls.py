@@ -741,6 +741,47 @@ urlpatterns = [
         name="search_assign_models",
     ),
     path(
+        "model-fields-modal-role/<int:role_id>/<str:app_label>/<str:model_name>/",
+        permission_views.ModelFieldsModalView.as_view(),
+        name="model_fields_modal_role",
+    ),
+    path(
+        "model-fields-modal-user/<int:user_id>/<str:app_label>/<str:model_name>/",
+        permission_views.ModelFieldsModalView.as_view(),
+        name="model_fields_modal_user",
+    ),
+    path(
+        "model-fields-modal-bulk/<str:app_label>/<str:model_name>/",
+        permission_views.ModelFieldsModalView.as_view(),
+        name="model_fields_modal_bulk",
+    ),
+    path(
+        "update-field-permission-role/<int:role_id>/<str:app_label>/<str:model_name>/<str:field_name>/",
+        permission_views.UpdateFieldPermissionView.as_view(),
+        name="update_field_permission_role",
+    ),
+    path(
+        "update-field-permission-user/<int:user_id>/<str:app_label>/<str:model_name>/<str:field_name>/",
+        permission_views.UpdateFieldPermissionView.as_view(),
+        name="update_field_permission_user",
+    ),
+    path(
+        "save-all-field-permissions-role/<int:role_id>/",
+        permission_views.SaveAllFieldPermissionsView.as_view(),
+        name="save_all_field_permissions_role",
+    ),
+    path(
+        "save-all-field-permissions-user/<int:user_id>/",
+        permission_views.SaveAllFieldPermissionsView.as_view(),
+        name="save_all_field_permissions_user",
+    ),
+    path(
+        "save-bulk-field-permissions/",
+        permission_views.SaveBulkFieldPermissionsView.as_view(),
+        name="save_bulk_field_permissions",
+    ),
+    # Initialize database urls
+    path(
         "initialize-database/",
         initialiaze_database.InitializeDatabase.as_view(),
         name="initialize_database",

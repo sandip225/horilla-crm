@@ -159,6 +159,18 @@ class Account(HorillaCoreModel):
 
     CURRENCY_FIELDS = ["annual_revenue"]
 
+    field_permissions = [
+        "account_owner",
+        "account_type",
+        "account_source",
+        "annual_revenue",
+        "description",
+        "industry",
+        "number_of_employees",
+        "phone",
+        "website",
+    ]
+
     class Meta:
         """Meta options for the Account model."""
 
@@ -299,6 +311,12 @@ class PartnerAccountRelationship(HorillaCoreModel):
         related_name="partner",
         verbose_name=_("Partner Account"),
     )
+
+    field_permissions = [
+        "account",
+        "role",
+        "partner",
+    ]
 
     class Meta:
         """Meta options for the PartnerAccountRelationship model."""

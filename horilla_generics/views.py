@@ -69,6 +69,7 @@ from horilla_core.models import (
     RecentlyViewed,
     RecycleBin,
 )
+from horilla_core.utils import get_field_permissions_for_model
 from horilla_generics.forms import (
     HorillaAttachmentForm,
     HorillaHistoryForm,
@@ -3581,6 +3582,7 @@ class HorillaDetailSectionView(DetailView):
         pipeline_field = self.request.GET.get("pipeline_field")
         if pipeline_field:
             excluded_fields.append(pipeline_field)
+
         if self.include_fields:
             return [
                 (field.verbose_name, field.name)
@@ -3602,6 +3604,13 @@ class HorillaDetailSectionView(DetailView):
         context["app_label"] = self.model._meta.app_label
         context["edit_field"] = self.edit_field
         context["non_editable_fields"] = self.non_editable_fields
+
+        # field permissions context
+        field_permissions = get_field_permissions_for_model(
+            self.request.user, self.model
+        )
+        context["field_permissions"] = field_permissions
+
         pipeline_field = self.request.GET.get("pipeline_field")
         if pipeline_field:
             context["pipeline_field"] = pipeline_field

@@ -3,10 +3,16 @@ import logging
 
 from dateutil.parser import parse
 from django.apps import apps
+from django.contrib.contenttypes.models import ContentType
 from django.db import models, transaction
 from django.db.models import QuerySet
 
-from horilla_core.models import MultipleCurrency, RecycleBin, ScoringRule
+from horilla_core.models import (
+    FieldPermission,
+    MultipleCurrency,
+    RecycleBin,
+    ScoringRule,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -343,3 +349,127 @@ def get_currency_display_value(obj, field_name, user):
     default_display = default_currency.display_with_symbol(value)
 
     return f"{default_display} ({user_display})"
+
+
+def get_user_field_permission(user, model, field_name):
+    """
+    Get field permission for a user (checks both user and role permissions)
+    Returns: 'readonly', 'readwrite', or 'hidden'
+    Default: 'readwrite' if no permission is set
+
+    Priority:
+    1. User-specific permission (highest)
+    2. Role permission (if user has a role)
+    3. Default: 'readwrite' (lowest)
+    """
+    if user.is_superuser:
+        return "readwrite"
+
+    content_type = ContentType.objects.get_for_model(model)
+
+    user_perm = FieldPermission.objects.filter(
+        user=user, content_type=content_type, field_name=field_name
+    ).first()
+
+    if user_perm:
+        return user_perm.permission_type
+
+    if hasattr(user, "role") and user.role:
+        role_perm = FieldPermission.objects.filter(
+            role=user.role, content_type=content_type, field_name=field_name
+        ).first()
+
+        if role_perm:
+            return role_perm.permission_type
+
+    return "readwrite"
+
+
+def get_field_permissions_for_model(user, model):
+    """
+    Get all field permissions for a model for a specific user
+    Returns a dictionary: {field_name: permission_type}
+
+    This is optimized to reduce database queries by fetching
+    all permissions at once instead of one by one.
+    """
+
+    if user.is_superuser:
+        return {}
+
+    content_type = ContentType.objects.get_for_model(model)
+    permissions_dict = {}
+
+    user_perms = FieldPermission.objects.filter(user=user, content_type=content_type)
+    for perm in user_perms:
+        permissions_dict[perm.field_name] = perm.permission_type
+
+    if hasattr(user, "role") and user.role:
+        role_perms = FieldPermission.objects.filter(
+            role=user.role, content_type=content_type
+        )
+        for perm in role_perms:
+            if perm.field_name not in permissions_dict:
+                permissions_dict[perm.field_name] = perm.permission_type
+
+    return permissions_dict
+
+
+def filter_hidden_fields(user, model, fields_list):
+    """
+    Filter out fields that should be hidden from a list of field names
+
+    Args:
+        user: The user to check permissions for
+        model: The Django model class
+        fields_list: List of field names to filter
+
+    Returns:
+        List of field names that are not hidden
+    """
+    if user.is_superuser:
+        return fields_list
+
+    field_permissions = get_field_permissions_for_model(user, model)
+
+    return [
+        field_name
+        for field_name in fields_list
+        if field_permissions.get(field_name, "readwrite") != "hidden"
+    ]
+
+
+def is_field_editable(user, model, field_name):
+    """
+    Check if a field is editable (not readonly or hidden) for a user
+
+    Returns:
+        True if field has 'readwrite' permission
+        False if field has 'readonly' or 'hidden' permission
+    """
+    permission = get_user_field_permission(user, model, field_name)
+    return permission == "readwrite"
+
+
+def get_editable_fields(user, model, fields_list):
+    """
+    Get list of fields that are editable by the user
+
+    Args:
+        user: The user to check permissions for
+        model: The Django model class
+        fields_list: List of field names to check
+
+    Returns:
+        List of field names that have 'readwrite' permission
+    """
+    if user.is_superuser:
+        return fields_list
+
+    field_permissions = get_field_permissions_for_model(user, model)
+
+    return [
+        field_name
+        for field_name in fields_list
+        if field_permissions.get(field_name, "readwrite") == "readwrite"
+    ]

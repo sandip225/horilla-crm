@@ -3323,3 +3323,64 @@ class ExportSchedule(HorillaCoreModel):
             text = f"{text}<br><span class='text-xs text-gray-500'>{date_text}</span>"
 
         return format_html(text)
+
+
+class FieldPermission(models.Model):
+    """
+    Model to store field-level permissions for users and roles
+    """
+
+    PERMISSION_CHOICES = [
+        ("readonly", "Read Only"),
+        ("readwrite", "Read and Write"),
+        ("hidden", "Don't Show"),
+    ]
+
+    # Link to either user or role (one must be set)
+    user = models.ForeignKey(
+        HorillaUser,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="field_permissions",
+    )
+    role = models.ForeignKey(
+        Role,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="field_permissions",
+    )
+
+    # Model and field information
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    field_name = models.CharField(max_length=255)
+
+    # Permission type
+    permission_type = models.CharField(
+        max_length=20, choices=PERMISSION_CHOICES, default="readwrite"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = [
+            ["user", "content_type", "field_name"],
+            ["role", "content_type", "field_name"],
+        ]
+        verbose_name = "Field Permission"
+        verbose_name_plural = "Field Permissions"
+
+    def __str__(self):
+        target = self.user.get_full_name() if self.user else self.role.role_name
+        return f"{target} - {self.content_type.model}.{self.field_name}: {self.permission_type}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+
+        # Ensure either user or role is set, but not both
+        if not self.user and not self.role:
+            raise ValidationError("Either user or role must be set")
+        if self.user and self.role:
+            raise ValidationError("Cannot set both user and role")
