@@ -90,6 +90,7 @@ class UserListView(LoginRequiredMixin, HorillaListView):
     bulk_update_two_column = True
     table_width = False
     bulk_delete_enabled = False
+    table_height = False
     table_height_as_class = "h-[500px]"
 
     def no_record_add_button(self):
@@ -115,7 +116,7 @@ class UserListView(LoginRequiredMixin, HorillaListView):
     ]
 
     columns = [
-        (_("First Name"), "get_avatar_with_name"),
+        (_("Name"), "get_avatar_with_name"),
         "state",
         "country",
         "contact_number",
@@ -277,6 +278,21 @@ class UserFormView(LoginRequiredMixin, HorillaMultiStepFormView):
             return reverse_lazy("horilla_core:user_edit_form", kwargs={"pk": pk})
         return reverse_lazy("horilla_core:user_create_form")
 
+    def has_permission(self):
+        """
+        Override permission check for user profile editing.
+        """
+        user = self.request.user
+        pk = self.kwargs.get(self.pk_url_kwarg)
+
+        if pk:
+            if int(pk) == user.pk:
+                return user.has_perm("horilla_core.can_change_profile")
+            else:
+                return user.has_perm("horilla_core.change_horillauser")
+        else:
+            return user.has_perm("horilla_core.add_horillauser")
+
 
 @method_decorator(htmx_required, name="dispatch")
 @method_decorator(
@@ -305,6 +321,9 @@ class UserDetailView(RecentlyViewedMixin, LoginRequiredMixin, HorillaDetailView)
         return context
 
 
+@method_decorator(
+    permission_required_or_denied("horilla_core.can_view_profile"), name="dispatch"
+)
 class MyProfileView(LoginRequiredMixin, TemplateView):
     """
     my profile page
@@ -382,6 +401,7 @@ class LoginHistoryListView(LoginRequiredMixin, HorillaListView):
     bulk_update_option = False
     enable_sorting = False
     table_width = False
+    table_height = False
     table_height_as_class = "h-[500px]"
 
     no_record_msg = "No login history available for this user."

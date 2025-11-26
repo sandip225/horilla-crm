@@ -25,6 +25,7 @@ class MyProfileSettings:
     url = reverse_lazy("horilla_core:my_profile_view")
     hx_select_id = "#my-profile-view"
     active_urls = "horilla_core:my_profile_view"
+    permissions = ["horilla_core.can_view_profile"]
     attrs = {
         "hx-boost": "true",
         "hx-target": "#my-settings-content",

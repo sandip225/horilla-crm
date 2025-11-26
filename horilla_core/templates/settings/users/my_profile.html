@@ -20,15 +20,18 @@
           </div>
           <div class="font-semibold transition duration-300">{{request.user.get_full_name}}</div>
         </div>
-        <div class="flex gap-2 mb-2">
-          <button class="border rounded-md p-3 border-dark-50"
-                hx-get="{% url 'horilla_core:user_edit_form' request.user.pk %}"
-                hx-target="#modalBox"
-                hx-swap="innerHTML"
-                onclick="openModal()">
-                <img src="{% static '/assets/icons/edit.svg' %}" alt="" width="15" />
-          </button>
-        </div>
+        {% has_perm "horilla_core.can_change_profile" as can_change_profile %}
+        {% if can_change_profile %}
+            <div class="flex gap-2 mb-2">
+            <button class="border rounded-md p-3 border-dark-50"
+                    hx-get="{% url 'horilla_core:user_edit_form' request.user.pk %}"
+                    hx-target="#modalBox"
+                    hx-swap="innerHTML"
+                    onclick="openModal()">
+                    <img src="{% static '/assets/icons/edit.svg' %}" alt="" width="15" />
+            </button>
+            </div>
+        {% endif %}
       </div>
     </div>
     <div id="details-content">
