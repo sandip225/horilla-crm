@@ -79,6 +79,10 @@
             window.calendarInitialized = false;
             window.currentDisplayOnly = "{{ request.GET.display_only|default:'' }}";
 
+            window.hasActivityCreatePerm = {% if perms.activity.add_activity %}true{% else %}false{% endif %};
+            window.hasUnavailabilityCreatePerm = {% if perms.timeline.add_useravailability %}true{% else %}false{% endif %};
+
+
             function getCalendarUrl(baseUrl) {
                 if (window.currentDisplayOnly) {
                     return baseUrl + (baseUrl.includes('?') ? '&' : '?') + 'display_only=' + encodeURIComponent(window.currentDisplayOnly);
@@ -406,34 +410,47 @@
                             rect.top - containerRect.top
                         );
                     },
-                    dateClick: function (info) {
-                        const rect = info.dayEl.getBoundingClientRect();
-                        const containerRect = calendarEl.getBoundingClientRect();
-                        const clickedDate = info.dateStr;
+                    ...( (window.hasActivityCreatePerm || window.hasUnavailabilityCreatePerm) ? {
+                        dateClick: function (info) {
+                            const rect = info.dayEl.getBoundingClientRect();
+                            const containerRect = calendarEl.getBoundingClientRect();
+                            const clickedDate = info.dateStr;
 
-                        const content = `
-                            <div class="flex flex-col gap-2">
-                                  <button
-                                    onclick="createNewActivity('${clickedDate}')"
-                                    class="text-blue-600 hover:underline text-sm"
-                                >
-                                    {% trans 'New Activity' %}
-                                </button>
-                                <button
-                                    onclick="markDateUnavailable('${clickedDate}')"
-                                    class="text-red-600 hover:underline text-sm"
-                                >
-                                    {% trans 'Mark as Unavailable' %}
-                                </button>
-                            </div>
-                        `;
+                            let content = '<div class="flex flex-col gap-2">';
 
-                        showPopup(
-                            content,
-                            rect.left - containerRect.left,
-                            rect.top - containerRect.top
-                        );
-                    },
+                            // Only add "New Activity" button if user has permission
+                            if (window.hasActivityCreatePerm) {
+                                content += `
+                                    <button
+                                        onclick="createNewActivity('${clickedDate}')"
+                                        class="text-blue-600 hover:underline text-sm"
+                                    >
+                                        {% trans 'New Activity' %}
+                                    </button>
+                                `;
+                            }
+
+                            // Only add "Mark as Unavailable" button if user has permission
+                            if (window.hasUnavailabilityCreatePerm) {
+                                content += `
+                                    <button
+                                        onclick="markDateUnavailable('${clickedDate}')"
+                                        class="text-red-600 hover:underline text-sm"
+                                    >
+                                        {% trans 'Mark as Unavailable' %}
+                                    </button>
+                                `;
+                            }
+
+                            content += '</div>';
+
+                            showPopup(
+                                content,
+                                rect.left - containerRect.left,
+                                rect.top - containerRect.top
+                            );
+                        },
+                    } : {} ),
                     eventDidMount: function (info) {
                         const calendarType = info.event.extendedProps.calendarType;
                         const checkbox = document.querySelector(`.calendar-checkbox[data-calendar-type="${calendarType}"]`);
