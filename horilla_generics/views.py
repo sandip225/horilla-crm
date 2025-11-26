@@ -256,7 +256,7 @@ class HorillaListView(ListView):
     default_sort_field = None
     default_sort_direction = "asc"
     sort_by_mapping = []
-    paginate_by = 100
+    paginate_by = 5
     page_kwarg = "page"
     main_url: str = ""
     search_url: str = ""
@@ -3503,7 +3503,7 @@ class HorillaDetailTabView(HorillaTabView):
     view_id = "generic-details-tab-view"
     object_id = None
     urls = {}
-    tab_class = " h-[365px]"
+    tab_class = "h-[calc(_100vh_-_475px_)] overflow-hidden vbvbvb"
 
     def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
@@ -4166,7 +4166,8 @@ class HorillaRelatedListSectionView(DetailView):
         list_view.view_id = f"{view_id}-content" if view_id else None
         list_view.main_url = self.request.path
         list_view.search_url = self.request.path
-        list_view.table_height_as_class = "h-[260px]"
+        list_view.table_height = False
+        list_view.table_height_as_class = "h-[calc(_100vh_-_500px_)]"
         list_view.owner_filtration = False
         return list_view
 
@@ -4380,7 +4381,8 @@ class HorillaNotesAttachementSectionView(DetailView):
         list_view.bulk_select_option = False
         list_view.list_column_visibility = False
         list_view.actions = self.actions
-        list_view.table_height_as_class = "h-[260px]"
+        list_view.table_height = False
+        list_view.table_height_as_class = "h-[calc(_100vh_-_500px_)]"
         list_view.table_width = False
         context = list_view.get_context_data(object_list=queryset)
         context.update(super().get_context_data())
@@ -4524,6 +4526,7 @@ class HorillaMultiStepFormView(FormView):
     step_titles = {}
     total_steps = 4
     form_url_name = None
+    form_title = None
     fullwidth_fields = []
     dynamic_create_fields = []
     dynamic_create_field_mapping = {}
@@ -4588,8 +4591,14 @@ class HorillaMultiStepFormView(FormView):
         if has_model_permission:
             return True
 
-        if self.check_object_permission:
-            return self.has_object_permission()
+        if self.kwargs.get("pk") and self.model:
+            app_label = self.model._meta.app_label
+            model_name = self.model._meta.model_name
+            change_own_perm = f"{app_label}.change_own_{model_name}"
+            permissions.append(change_own_perm)
+
+            if user.has_perm(change_own_perm):
+                return self.has_object_permission()
 
         return False
 
@@ -4598,15 +4607,15 @@ class HorillaMultiStepFormView(FormView):
         Check object-level permissions (e.g., ownership) on self.model.
         Uses model's OWNER_FIELDS attribute to determine ownership.
         """
-        # Only check on edit mode (when pk exists)
         if not self.kwargs.get("pk") or not self.model:
             return False
 
         try:
-            # Get the object being edited
             obj = self.model.objects.get(pk=self.kwargs["pk"])
 
-            # First check if model has OWNER_FIELDS attribute
+            if hasattr(obj, "is_owned_by"):
+                return obj.is_owned_by(self.request.user)
+
             if hasattr(self.model, "OWNER_FIELDS"):
                 owner_fields = self.model.OWNER_FIELDS
                 for owner_field in owner_fields:
@@ -4615,7 +4624,6 @@ class HorillaMultiStepFormView(FormView):
                         if owner == self.request.user:
                             return True
 
-            # Fallback to common owner field names if OWNER_FIELDS not found
             fallback_owner_fields = [
                 f"{self.model._meta.model_name}_owner",  # e.g., campaign_owner
                 "owner",
@@ -4846,9 +4854,9 @@ class HorillaMultiStepFormView(FormView):
 
     def get_form_title(self):
         if self.model:
-            action = "Edit" if self.object else "Add"
-            return f"{action} {self.model.__name__}"
-        return "Add Item"
+            action = _("Update") if self.object else _("Create")
+            verbose = self.model._meta.verbose_name
+            return f"{action} {verbose}"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -4856,7 +4864,7 @@ class HorillaMultiStepFormView(FormView):
         context["step_titles"] = self.step_titles
         context["total_steps"] = self.total_steps
         context["current_step"] = self.current_step
-        context["form_title"] = self.get_form_title()
+        context["form_title"] = self.form_title or self.get_form_title()
         context["object"] = self.object
         context["is_edit"] = bool(self.object)
         context["full_width_fields"] = self.fullwidth_fields
@@ -4894,7 +4902,6 @@ class HorillaMultiStepFormView(FormView):
             f"{self.storage_key}_files", {}
         )
 
-        # NEW: Add file field states to context
         form_data = self.request.session.get(self.storage_key, {})
         files_data = self.request.session.get(f"{self.storage_key}_files", {})
         file_field_states = {}
@@ -5235,7 +5242,6 @@ class HorillaSingleFormView(FormView):
         """
         user = self.request.user
 
-        # Get permissions to check
         permissions = self.permission_required or self.get_auto_permissions()
 
         if isinstance(permissions, str):
@@ -5246,8 +5252,14 @@ class HorillaSingleFormView(FormView):
         if has_model_permission:
             return True
 
-        if self.check_object_permission:
-            return self.has_object_permission()
+        if self.kwargs.get("pk") and self.model:
+            app_label = self.model._meta.app_label
+            model_name = self.model._meta.model_name
+            change_own_perm = f"{app_label}.change_own_{model_name}"
+            permissions.append(change_own_perm)
+
+            if user.has_perm(change_own_perm):
+                return self.has_object_permission()
 
         return False
 
@@ -5256,15 +5268,15 @@ class HorillaSingleFormView(FormView):
         Check object-level permissions (e.g., ownership) on self.model.
         Uses model's OWNER_FIELDS attribute to determine ownership.
         """
-        # Only check on edit mode (when pk exists)
         if not self.kwargs.get("pk") or not self.model:
             return False
 
         try:
-            # Get the object being edited
             obj = self.model.objects.get(pk=self.kwargs["pk"])
 
-            # First check if model has OWNER_FIELDS attribute
+            if hasattr(obj, "is_owned_by"):
+                return obj.is_owned_by(self.request.user)
+
             if hasattr(self.model, "OWNER_FIELDS"):
                 owner_fields = self.model.OWNER_FIELDS
                 for owner_field in owner_fields:
@@ -5273,7 +5285,6 @@ class HorillaSingleFormView(FormView):
                         if owner == self.request.user:
                             return True
 
-            # Fallback to common owner field names if OWNER_FIELDS not found
             fallback_owner_fields = [
                 f"{self.model._meta.model_name}_owner",  # e.g., campaign_owner
                 "owner",
