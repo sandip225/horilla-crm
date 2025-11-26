@@ -46,6 +46,7 @@
                             </div>
                             <div class="flex items-center">
                                 <button id="discardBtn"
+                                        class="cursor-pointer"
                                         title="Discard Changes"
                                         hx-post="{% url 'horilla_reports:discard_report_changes' report.pk %}"
                                         hx-trigger="click"
@@ -60,6 +61,7 @@
                             <div class="flex items-center">
                                 <button id="closeBtn"
                                         title="Close Panel"
+                                        class="cursor-pointer"
                                         hx-get="{% url 'horilla_reports:report_detail' report.pk %}"
                                         hx-target="#mainContent"
                                         hx-swap="outerHTML"

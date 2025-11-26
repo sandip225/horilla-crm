@@ -41,7 +41,7 @@
                 class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md modal-content opacity-0 scale-95 transition-all duration-300 min-w-[850px]">
                 <div class="flex justify-between items-center mb-2">
                     <h2 class="text-md font-semibold">{% trans 'Select Columns to Export (Optional)'%}</h2>
-                    <button onclick="closeExport()" class="text-gray-500 hover:text-gray-500 text-xl">
+                    <button onclick="closeExport()" class="text-gray-500 hover:text-gray-500 text-xl cursor-pointer">
                         <img src="{% static 'assets/icons/close.svg' %}" alt="Close" />
                     </button>
                 </div>
@@ -266,7 +266,7 @@
                 </div>
             {% endif %}
 
-            <div class="custom-scroll relative overflow-hidden overflow-y-auto overflow-x-auto {% if table_width %} h-[calc(100vh_-_245px)] {% endif %} {% if table_height %} [h-51vh] [max-h-unset]  {% endif %} {{ table_height_as_class }} [box-shadow:0px_0px_20px_0px_rgb(0_0_0_/_5%)] bg-white rounded-lg max-h-fit z-0  {% if table_class %}  block text-[.8rem] {% endif %}"
+            <div class="custom-scroll relative overflow-hidden overflow-y-auto overflow-x-auto {% if table_width %} h-[calc(100vh_-_245px)] {% endif %} {% if table_height %} [h-51vh] [max-h-unset] {% else %}   {{ table_height_as_class }}  {% endif %}  [box-shadow:0px_0px_20px_0px_rgb(0_0_0_/_5%)] bg-white rounded-lg max-h-fit z-0  {% if table_class %}  block text-[.8rem] {% endif %}"
                 id="table-container-{{view_id|safe}}" data-view-id="{{view_id|safe}}" data-record-ids="{{ selected_ids_json }}"
                 data-total-records="{{ total_records_count }}">
                 <table class="w-full {% if not table_class %} border-separate border-spacing-0  {% endif %}">
