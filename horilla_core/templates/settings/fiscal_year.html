@@ -18,15 +18,20 @@
             id="preview-calendar-btn">
             {% trans ' Preview Calendar' %}
         </button>
-        <button
-          id="toggleFiscalBtn"
-          class="text-sm px-4 py-2 bg-primary-600 rounded-md hover:bg-primary-800 transition duration-300 text-[white]"
-          hx-get="{% url 'horilla_core:fiscal_year_form_edit' obj.id %}"
-          hx-target="#modalBox"
-          hx-trigger="click"
-          hx-on:click="openModal()">
-          {% trans ' Manage Fiscal Year' %}
-        </button>
+        {% has_perm "horilla_core.add_fiscalyear" as can_add_fiscalyear %}
+        {% has_perm "horilla_core.change_fiscalyear" as can_change_fiscalyear %}
+          {% if can_add_fiscalyear or can_change_fiscalyear %}
+            <button
+              id="toggleFiscalBtn"
+              class="text-sm px-4 py-2 bg-primary-600 rounded-md hover:bg-primary-800 transition duration-300 text-[white]"
+              hx-get="{% url 'horilla_core:fiscal_year_form_edit' obj.id %}"
+              hx-target="#modalBox"
+              hx-trigger="click"
+              hx-on:click="openModal()">
+              {% trans ' Manage Fiscal Year' %}
+            </button>
+          {% endif %}
+
       </div>
     </div>
     <div id="fiscal-year-container">
