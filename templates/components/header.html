@@ -17,10 +17,16 @@
 
     <div class="flex items-center gap-4">
         <div class="flex items-center gap-1 sm:gap-2">
-            {% comment %} <button
-                class="text-primary-600 w-8 h-8 lg:w-12 lg:h-12 bg-primary-100 hover:bg-secondary-50 rounded-lg transition duration-300">
-                <i class="fa-solid fa-moon"></i>
-            </button> {% endcomment %}
+             <button
+               id="darkModeToggle"
+                        type="button"
+                        aria-pressed="false"
+                class="group flex items-center justify-center text-primary-600 w-8 h-8 lg:w-12 lg:h-12 bg-primary-100 hover:bg-primary-600 rounded-lg transition duration-300">
+                <i class="fa-solid fa-lightbulb  transition duration-300 group-hover:text-white"></i>
+            </button>
+
+
+
 
             {% has_perm "horilla_core.can_view_horilla_settings" as view_global_settings %}
             {% if view_global_settings %}
@@ -539,6 +545,173 @@
             }
             }
         });
+        (function initDarkMode() {
+            const savedTheme = localStorage.getItem("theme");
+            const html = document.documentElement;
 
-        </script>
+            // Set default if not set
+            if (!savedTheme) {
+                localStorage.setItem("theme", "light");
+            }
+
+            // Ensure classes are correct
+            if (savedTheme === "dark") {
+                html.classList.add("dark");
+                document.body.classList.add("dark");
+                html.style.colorScheme = "dark";
+            } else {
+                html.classList.remove("dark");
+                document.body.classList.remove("dark");
+                html.style.colorScheme = "light";
+            }
+        })();
+
+        // Update UI when DOM is ready
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedTheme = localStorage.getItem("theme") || "light";
+            const toggleBtn = document.getElementById("darkModeToggle");
+
+            if (!toggleBtn) return;
+
+            const icon = toggleBtn.querySelector(".fa-solid");
+
+            // Update button appearance
+            if (savedTheme === "dark") {
+                toggleBtn.setAttribute("aria-pressed", "true");
+                if (icon) {
+                    icon.classList.remove("fa-lightbulb");
+                    icon.classList.add("fa-moon");
+                }
+            } else {
+                toggleBtn.setAttribute("aria-pressed", "false");
+                if (icon) {
+                    icon.classList.remove("fa-moon");
+                    icon.classList.add("fa-lightbulb");
+                }
+            }
+
+            // Toggle button handler
+            toggleBtn.addEventListener("click", () => {
+                const html = document.documentElement;
+                const body = document.body;
+                const isDark = html.classList.contains("dark");
+
+                if (isDark) {
+                    // Switch to light
+                    html.classList.remove("dark");
+                    body.classList.remove("dark");
+                    html.style.colorScheme = "light";
+                    localStorage.setItem("theme", "light");
+                    toggleBtn.setAttribute("aria-pressed", "false");
+
+                    if (icon) {
+                        icon.classList.remove("fa-moon");
+                        icon.classList.add("fa-lightbulb");
+                    }
+                } else {
+                    // Switch to dark
+                    html.classList.add("dark");
+                    body.classList.add("dark");
+                    html.style.colorScheme = "dark";
+                    localStorage.setItem("theme", "dark");
+                    toggleBtn.setAttribute("aria-pressed", "true");
+
+                    if (icon) {
+                        icon.classList.remove("fa-lightbulb");
+                        icon.classList.add("fa-moon");
+                    }
+                }
+
+                // Refresh charts
+                if (typeof window.chartInstances !== "undefined") {
+                    Object.keys(window.chartInstances).forEach(key => {
+                        const chartData = window.chartInstances[key];
+                        if (chartData && chartData.instance && chartData.config) {
+                            EChartsConfig.refreshChartTheme(chartData.instance, chartData.config);
+                        }
+                    });
+                }
+            });
+        });
+
+        // IMPORTANT: Also handle HTMX page swaps
+        document.body.addEventListener('htmx:afterSwap', function() {
+            const theme = localStorage.getItem("theme");
+            if (theme === "dark") {
+                document.documentElement.classList.add("dark");
+                document.body.classList.add("dark");
+            }
+        });
+
+
+        {% comment %} document.addEventListener("DOMContentLoaded", () => {
+    const savedTheme = localStorage.getItem("theme");
+    const toggleBtn = document.getElementById("darkModeToggle");
+    const icon = toggleBtn.querySelector(".fa-solid");
+
+    // If dark theme saved earlier
+    if (savedTheme === "dark") {
+        document.body.classList.add("dark");
+        toggleBtn.setAttribute("aria-pressed", "true");
+
+        // Show MOON in dark mode
+        icon.classList.remove("fa-lightbulb");
+        icon.classList.add("fa-moon");
+
+    } else {
+        // Default = light
+        document.body.classList.remove("dark");
+        toggleBtn.setAttribute("aria-pressed", "false");
+
+        // Show SUN in light mode
+        icon.classList.remove("fa-moon");
+        icon.classList.add("fa-lightbulb");
+
+        if (savedTheme === null) {
+            localStorage.setItem("theme", "light");
+        }
+    }
+});
+
+// Toggle button logic
+const toggleBtn = document.getElementById("darkModeToggle");
+
+toggleBtn.addEventListener("click", () => {
+    document.body.classList.toggle("dark");
+
+    const isDark = document.body.classList.contains("dark");
+    toggleBtn.setAttribute("aria-pressed", isDark);
+
+    const icon = toggleBtn.querySelector(".fa-solid");
+
+    if (isDark) {
+        // Switch to MOON
+        icon.classList.remove("fa-lightbulb");
+        icon.classList.add("fa-moon");
+    } else {
+        // Switch to SUN
+        icon.classList.remove("fa-moon");
+        icon.classList.add("fa-lightbulb");
+    }
+
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+
+    // Keep your chart theme refresh code
+    if (typeof window.chartInstances !== "undefined") {
+        Object.keys(window.chartInstances).forEach(key => {
+            const chartData = window.chartInstances[key];
+            if (chartData && chartData.instance && chartData.config) {
+                EChartsConfig.refreshChartTheme(chartData.instance, chartData.config);
+            }
+        });
+    }
+}); {% endcomment %}
+
+
+
+
+</script>
+
+
+
     </div>

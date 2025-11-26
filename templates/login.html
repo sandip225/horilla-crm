@@ -19,6 +19,7 @@
         <script src="{% static 'assets/js/cloudflare/chart.min.js' %}"></script>
         <script src="{% static 'assets/js/cloudflare/htmx.min.js' %}"></script>
         <link rel="stylesheet" href="{% static 'assets/css/style.css' %}" />
+        <link rel="stylesheet" href="{% static 'assets/css/dark.css' %}" />
         <link rel="stylesheet" href="{% static 'assets/css/calendar.css' %}" />
         <link href="{% static 'assets/css/select2.min.css' %}"  rel="stylesheet" />
         <link rel="stylesheet" href="{% static 'assets/css/sweetalert_toast/toast.css' %}" />
@@ -126,6 +127,23 @@
         </div>
 
         <script>
+            (function() {
+                // Get theme from localStorage
+                const theme = localStorage.getItem('theme');
+
+                // If theme is dark, add 'dark' class to body
+                if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    // Also add to body when it's available
+                    if (document.body) {
+                        document.body.classList.add('dark');
+                    } else {
+                        document.addEventListener('DOMContentLoaded', function() {
+                            document.body.classList.add('dark');
+                        });
+                    }
+                }
+            })();
 
             function togglePassword() {
                 const passwordInput = document.getElementById('passwordInput');

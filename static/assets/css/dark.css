@@ -1,0 +1,189 @@
+body.dark {
+  color: white;
+  background-color: black;
+}
+body.dark .bg-\[\#fff\],
+body.dark .dropdown-content a:hover,
+body.dark .probar li .bg-\[\#F0F0F0\],
+body.dark .bg-gray-50,
+body.dark .bg-gray-100,
+body.dark .bg-blue-50,
+body.dark .bg-gray-200,
+body.dark .bg-dark-50,
+body.dark .bg-\[\#f8f8f9\],
+body.dark .module-icon,
+body.dark .bg-\[white\],
+body.dark .tabloading{
+  background-color: black !important;
+}
+body.dark .bg-white {
+  background-color: rgb(42 42 42) !important;
+}
+body.dark input,
+body.dark textarea,
+body.dark .select2-container--default .select2-selection--single,
+body.dark .select2-container--default .select2-selection--multiple,
+body.dark .note-toolbar,
+body.dark .note-btn{
+  background-color: black !important;
+}
+body.dark .nav-link img {
+  filter: brightness(0) invert(1);
+}
+body.dark .bg-primary-100,
+body.dark .select2-dropdown,
+body.dark .bg-\[\#f0f0f0\],
+body.dark .bg-yellow-50,
+body.dark div:where(.swal2-popup),
+body.dark .bg-\[\#f1f1f1\],
+body.dark .bg-primary-200,
+body.dark .bg-\[\#e9edf0\],
+body.dark .hover\:bg-primary-100:hover,
+body.dark .bg-blue-100,
+body.dark .panel-default>.panel-heading,
+body.dark .module-card
+{
+  background-color: #2f2f2f !important;
+}
+body.dark .header{
+  background: transparent;
+}
+body.dark .text-secondary-900
+body.dark .text-gray-700{
+  color: #ebebeb;
+}
+body.dark .nav-link:hover,
+body.dark .hover\:bg-\[\#f3f4f6\]:hover,
+body.dark #tab-campaigns button:hover,
+body.dark .progress li .sec::before,
+body.dark input[type="checkbox"],
+body.dark .swal2-popup.swal2-toast.custom-toast,
+body.dark .panel-default>.panel-heading, 
+body.dark .note-editor.note-frame .note-editing-area .note-editable{
+  background-color: #5d5d5d !important;
+}
+body.dark h1,
+body.dark .member-header,
+body.dark .probar li div,
+body.dark .list-disc,
+body.dark .border-\[\#dddddd\],
+body.dark .swal2-popup.swal2-toast.custom-toast .swal2-title,
+body.dark .module-description ,
+body.dark .module-name,
+body.dark .text-\[\#756f6fd1\],
+body.dark .text-gray-900{
+  color: rgb(255 255 255 / 95%) !important;
+}
+body.dark h3,
+body.dark .text-\[\#3d3d3d\] {
+  color: rgb(255 255 255 / 90%) !important;
+}
+body.dark p,
+body.dark .swal2-html-container,
+body.dark .member-footer div.name,
+body.dark .text-dark-200,
+body.dark .bg-primary-200 {
+  color: rgb(255 255 255 / 80%) !important;
+}
+body.dark .border-r,
+body.dark .border-b,
+body.dark .border-t,
+body.dark .border,
+body.dark .dropdown-content,
+body.dark .select2-container--default .select2-selection--single,
+body.dark .border-\[\#efefef\],
+body.dark .select2-dropdown,
+body.dark
+  .select2-container--default
+  .select2-search--dropdown
+  .select2-search__field,
+body.dark .border-\[2px\],
+body.dark .border-primary-400,
+body.dark .select2-container--default .select2-selection--multiple,
+body.dark .member-view-box,
+body.dark .fc-theme-standard td,
+body.dark .fc-theme-standard th,
+body.dark .fc-theme-standard .fc-scrollgrid,
+body.dark .border-\[\#e5e5e5\],
+body.dark .border-\[\#dddddd\],
+body.dark button,
+body.dark .note-toolbar,
+body.dark .border-\[\#e9e9e9\], 
+body.dark .panel-default>.panel-heading,
+body.dark .module-card{
+  border-color: #565656 !important;
+}
+body.dark .border::placeholder {
+  color: #b5b5b5 !important;
+}
+body.dark #settings-sidebar a,
+body.dark span,
+body.dark button,
+body.dark .dropdown-content a,
+body.dark label {
+  color: rgb(255 255 255 / 80%) !important;
+}
+body.dark #settings-sidebar a:hover,
+body.dark .dropdown-content a:hover {
+  color: white !important;
+}
+body.dark button.text-gray-500 img,
+body.dark #profile-edit-btn img,
+body.dark #navBar img,
+body.dark .bg-\[\#f0f0f0\] img,
+body.dark #dropdownLeftEndButton img,
+body.dark
+  .after\:bg-\[url\(\/static\/assets\/icons\/right-arrow\.svg\)\]::after,
+body.dark #tab-campaigns button img,
+#related-tab-contents button img,
+body.dark #modalCloseButton,
+body.dark .drag-handle img,
+body.dark #exportDropdownButton img,
+body.dark #toggleBtn img ,
+body.dark #nav-actions img,
+body.dark button.absolute img,
+body.dark .dropdown-wrapper .text-gray-600 img {
+  filter: brightness(0) invert(1);
+}
+body.dark #settings-sidebar .border-t:first-child {
+  border-color: transparent !important;
+}
+body.dark .custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #7f7f7f #424242;
+}
+body.dark .bg-primary-300 {
+  background-color: #3f3f3f !important;
+}
+body.dark .canvas-wrap {
+  background: #6a6a6a;
+}
+body.dark .member-view-box {
+  background-color: #252525;
+}
+body.dark .fc .fc-daygrid-day.fc-day-today {
+  background-color: rgb(96 96 96) !important;
+  color: #ffffff !important;
+}
+body.dark .bg-\[\#ffefed\],
+.bg-\[\#f3f4f6\] {
+  background-color: rgb(82 82 82) !important;
+}
+body.dark .probar li .bg-primary-400 {
+  background-color: #e54f384f;
+}
+body.dark .probar li .bg-primary-400:hover {
+  background-color: #e54f38;
+}
+body.dark .htmx-indicator {
+  background-color: black;
+}
+body.dark .black{
+  background-color: black !important;
+}
+body.dark .text-red-500{
+  color: red !important;
+}
+body.dark .bg-\[\#efefef96\] {
+  background-color: #5c5c5c96;
+}

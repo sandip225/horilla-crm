@@ -1,9 +1,3 @@
-/**
- * ECharts Configuration Module - FIXED VERSION
- * Handles all chart types and configurations for the reporting system
- * Fixed legend issue for column, bar, line, and scatter charts
- */
-
 var EChartsConfig = {
 
     // Default colors palette
@@ -15,6 +9,26 @@ var EChartsConfig = {
         '#86efac', '#f472b6', '#818cf8', '#fb923c',
         '#a78bfa', '#4ade80', '#f59e0b', '#ec4899', '#06b6d4'
     ],
+
+    // NEW: Detect if dark mode is active
+    isDarkMode: function() {
+        return document.body.classList.contains('dark');
+    },
+
+    // NEW: Get theme-aware text color
+    getTextColor: function() {
+        return this.isDarkMode() ? '#e5e7eb' : '#374151';
+    },
+
+    // NEW: Get theme-aware axis line color
+    getAxisLineColor: function() {
+        return this.isDarkMode() ? '#4b5563' : '#d1d5db';
+    },
+
+    // NEW: Get theme-aware split line color
+    getSplitLineColor: function() {
+        return this.isDarkMode() ? '#374151' : '#e5e7eb';
+    },
 
     // Common styling configuration
     commonStyles: {
@@ -59,7 +73,7 @@ var EChartsConfig = {
         }
     },
 
-    // Common legend configuration
+    // UPDATED: Common legend configuration with dark mode support
     getLegendConfig: function(position = 'bottom') {
         return {
             orient: position === 'bottom' ? 'horizontal' : 'vertical',
@@ -70,7 +84,8 @@ var EChartsConfig = {
             itemHeight: 12,
             textStyle: {
                 fontSize: this.commonStyles.legendFontSize,
-                fontFamily: this.commonStyles.fontFamily
+                fontFamily: this.commonStyles.fontFamily,
+                color: this.getTextColor() // ADDED: Theme-aware color
             }
         };
     },
@@ -83,6 +98,35 @@ var EChartsConfig = {
             bottom: '15%',
             top: '10%',
             containLabel: true
+        };
+    },
+
+    // UPDATED: Common axis label style
+    getAxisLabelStyle: function() {
+        return {
+            fontSize: this.commonStyles.axisFontSize,
+            fontFamily: this.commonStyles.fontFamily,
+            color: this.getTextColor() // ADDED: Theme-aware color
+        };
+    },
+
+    // UPDATED: Common axis line style
+    getAxisLineStyle: function() {
+        return {
+            lineStyle: {
+                color: this.getAxisLineColor()
+            }
+        };
+    },
+
+    // UPDATED: Common split line style
+    getSplitLineStyle: function() {
+        return {
+            show: true,
+            lineStyle: {
+                type: 'dashed',
+                color: this.getSplitLineColor()
+            }
         };
     },
 
@@ -103,10 +147,6 @@ var EChartsConfig = {
                     return `${params.seriesName}<br/>${params.name}: ${params.value} (${params.percent}%)${hasUrl ? '<br/><i>Click to view details</i>' : ''}`;
                 }
             },
-            // tooltip: {
-            //     trigger: 'item',
-            //     formatter: '{a} <br/>{b}: {c} ({d}%)'
-            // },
             legend: this.getLegendConfig(),
             color: colors,
             series: [{
@@ -127,7 +167,8 @@ var EChartsConfig = {
                     label: {
                         show: true,
                         fontSize: 14,
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        color: this.getTextColor()
                     },
                     itemStyle: {
                         shadowBlur: 10,
@@ -180,7 +221,8 @@ var EChartsConfig = {
                     label: {
                         show: true,
                         fontSize: 14,
-                        fontWeight: 'bold'
+                        fontWeight: 'bold',
+                        color: this.getTextColor()
                     },
                     itemStyle: {
                         shadowBlur: 10,
@@ -196,9 +238,8 @@ var EChartsConfig = {
         };
     },
 
-    // FIXED: Column Chart (Vertical) Configuration - Multiple Series
+    // UPDATED: Column Chart Configuration
     getColumnChartOption: function(labels, data, colors, labelField, urls) {
-        // Create individual series for each category to show proper legends
         const series = labels.map((label, index) => ({
             name: label,
             type: 'bar',
@@ -237,27 +278,23 @@ var EChartsConfig = {
             grid: this.getGridConfig(),
             xAxis: {
                 type: 'category',
-                data: [labelField], // Single category for all bars
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                }
+                data: [labelField],
+                axisLabel: this.getAxisLabelStyle(),
+                axisLine: this.getAxisLineStyle()
             },
             yAxis: {
                 type: 'value',
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                }
+                axisLabel: this.getAxisLabelStyle(),
+                axisLine: this.getAxisLineStyle(),
+                splitLine: this.getSplitLineStyle()
             },
             color: colors,
             series: series
         };
     },
 
-    // FIXED: Bar Chart (Horizontal) Configuration - Multiple Series
+    // UPDATED: Bar Chart Configuration
     getBarChartOption: function(labels, data, colors, labelField, urls) {
-        // Create individual series for each category to show proper legends
         const series = labels.map((label, index) => ({
             name: label,
             type: 'bar',
@@ -296,27 +333,23 @@ var EChartsConfig = {
             grid: this.getGridConfig(),
             xAxis: {
                 type: 'value',
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                }
+                axisLabel: this.getAxisLabelStyle(),
+                axisLine: this.getAxisLineStyle(),
+                splitLine: this.getSplitLineStyle()
             },
             yAxis: {
                 type: 'category',
-                data: [labelField], // Single category for all bars
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                }
+                data: [labelField],
+                axisLabel: this.getAxisLabelStyle(),
+                axisLine: this.getAxisLineStyle()
             },
             color: colors,
             series: series
         };
     },
 
-    // FIXED: Line Chart Configuration - Multiple Series
+    // UPDATED: Line Chart Configuration
     getLineChartOption: function(labels, data, colors, labelField, urls) {
-        // For line chart, we need a different approach - use labels as x-axis
         const lineData = data.map((value, index) => ({
             value: value,
             url: urls && urls[index] ? urls[index] : null
@@ -344,17 +377,16 @@ var EChartsConfig = {
                 type: 'category',
                 data: labels,
                 axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily,
+                    ...this.getAxisLabelStyle(),
                     rotate: labels.some(label => label.length > 8) ? 45 : 0
-                }
+                },
+                axisLine: this.getAxisLineStyle()
             },
             yAxis: {
                 type: 'value',
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                }
+                axisLabel: this.getAxisLabelStyle(),
+                axisLine: this.getAxisLineStyle(),
+                splitLine: this.getSplitLineStyle()
             },
             color: colors,
             series: [{
@@ -374,8 +406,8 @@ var EChartsConfig = {
         };
     },
 
-    // Funnel Chart Configuration
-    getFunnelChartOption: function(labels, data, colors, labelField,urls) {
+    // UPDATED: Funnel Chart Configuration
+    getFunnelChartOption: function(labels, data, colors, labelField, urls) {
         const funnelData = labels.map((label, index) => ({
             name: label,
             value: data[index] || 0,
@@ -391,11 +423,6 @@ var EChartsConfig = {
                     return `${params.seriesName}<br/>${params.name}: ${params.value}${hasUrl ? '<br/><i>Click to view details</i>' : ''}`;
                 }
             },
-            // ...this.getAnimationConfig(),
-            // tooltip: {
-            //     trigger: 'item',
-            //     formatter: '{a} <br/>{b}: {c}'
-            // },
             legend: this.getLegendConfig(),
             color: colors,
             series: [{
@@ -415,7 +442,8 @@ var EChartsConfig = {
                     show: true,
                     position: 'inside',
                     fontSize: 12,
-                    fontFamily: this.commonStyles.fontFamily
+                    fontFamily: this.commonStyles.fontFamily,
+                    color: this.getTextColor()
                 },
                 labelLine: {
                     length: 10,
@@ -430,7 +458,8 @@ var EChartsConfig = {
                 },
                 emphasis: {
                     label: {
-                        fontSize: 14
+                        fontSize: 14,
+                        color: this.getTextColor()
                     }
                 },
                 data: funnelData
@@ -438,9 +467,8 @@ var EChartsConfig = {
         };
     },
 
-    // FIXED: Scatter Chart Configuration - Multiple Series
+    // UPDATED: Scatter Chart Configuration
     getScatterChartOption: function(labels, data, colors, labelField, urls) {
-        // Create individual series for each data point to show proper legends
         const series = labels.map((label, index) => ({
             name: label,
             type: 'scatter',
@@ -479,24 +507,23 @@ var EChartsConfig = {
                 type: 'category',
                 data: labels,
                 axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily,
+                    ...this.getAxisLabelStyle(),
                     rotate: labels.some(label => label.length > 8) ? 45 : 0
-                }
+                },
+                axisLine: this.getAxisLineStyle()
             },
             yAxis: {
                 type: 'value',
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                }
+                axisLabel: this.getAxisLabelStyle(),
+                axisLine: this.getAxisLineStyle(),
+                splitLine: this.getSplitLineStyle()
             },
             color: colors,
             series: series
         };
     },
 
-    // Stacked Vertical Chart Configuration
+    // UPDATED: Stacked Vertical Chart Configuration
     getStackedVerticalChartOption: function(stackedData, colors, labelField, urls) {
         if (!stackedData || !stackedData.categories || !stackedData.series || stackedData.series.length === 0) {
             return this.getColumnChartOption(['No Data'], [0], colors, labelField);
@@ -545,33 +572,26 @@ var EChartsConfig = {
                 type: 'category',
                 data: stackedData.categories,
                 axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily,
+                    ...this.getAxisLabelStyle(),
                     rotate: stackedData.categories.some(cat => cat.length > 8) ? 45 : 0
                 },
                 axisTick: {
                     show: false
-                }
+                },
+                axisLine: this.getAxisLineStyle()
             },
             yAxis: {
                 type: 'value',
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                },
-                splitLine: {
-                    show: true,
-                    lineStyle: {
-                        type: 'dashed'
-                    }
-                }
+                axisLabel: this.getAxisLabelStyle(),
+                axisLine: this.getAxisLineStyle(),
+                splitLine: this.getSplitLineStyle()
             },
             color: colors,
             series: series
         };
     },
 
-    // Stacked Horizontal Chart Configuration
+    // UPDATED: Stacked Horizontal Chart Configuration
     getStackedHorizontalChartOption: function(stackedData, colors, labelField, urls) {
         if (!stackedData || !stackedData.categories || !stackedData.series || stackedData.series.length === 0) {
             return this.getBarChartOption(['No Data'], [0], colors, labelField);
@@ -621,72 +641,21 @@ var EChartsConfig = {
             },
             xAxis: {
                 type: 'value',
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                },
-                splitLine: {
-                    show: true,
-                    lineStyle: {
-                        type: 'dashed'
-                    }
-                }
+                axisLabel: this.getAxisLabelStyle(),
+                axisLine: this.getAxisLineStyle(),
+                splitLine: this.getSplitLineStyle()
             },
             yAxis: {
                 type: 'category',
                 data: stackedData.categories,
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                },
+                axisLabel: this.getAxisLabelStyle(),
                 axisTick: {
                     show: false
-                }
+                },
+                axisLine: this.getAxisLineStyle()
             },
             color: colors,
             series: series
-        };
-    },
-
-    // Area Chart Configuration
-    getAreaChartOption: function(labels, data, colors, labelField) {
-        return {
-            ...this.getAnimationConfig(),
-            tooltip: {
-                trigger: 'axis'
-            },
-            legend: this.getLegendConfig(),
-            grid: this.getGridConfig(),
-            xAxis: {
-                type: 'category',
-                data: labels,
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                }
-            },
-            yAxis: {
-                type: 'value',
-                axisLabel: {
-                    fontSize: this.commonStyles.axisFontSize,
-                    fontFamily: this.commonStyles.fontFamily
-                }
-            },
-            color: colors,
-            series: [{
-                name: labelField,
-                type: 'line',
-                data: data,
-                smooth: true,
-                symbol: 'circle',
-                symbolSize: 6,
-                lineStyle: {
-                    width: 3
-                },
-                areaStyle: {
-                    opacity: 0.3
-                }
-            }]
         };
     },
 
@@ -706,29 +675,6 @@ var EChartsConfig = {
                 return idx * 10;
             }
         };
-    },
-
-    // Utility function to format numbers
-    formatNumber: function(num, decimals = 0) {
-        if (num === null || num === undefined) return '0';
-
-        const factor = Math.pow(10, decimals);
-        const formatted = Math.round(num * factor) / factor;
-
-        return formatted.toLocaleString();
-    },
-
-    // Utility function to get dynamic colors based on data length
-    getDynamicColors: function(dataLength) {
-        const colors = [...this.defaultColors];
-
-        while (colors.length < dataLength) {
-            // Generate additional colors if needed
-            const hue = (colors.length * 137.5) % 360; // Golden angle for color distribution
-            colors.push(`hsl(${hue}, 70%, 60%)`);
-        }
-
-        return colors.slice(0, dataLength);
     },
 
     attachClickHandler: function(chartInstance, urls) {
@@ -759,7 +705,6 @@ var EChartsConfig = {
                     tempLink.setAttribute('hx-select-oob', '#sideMenuContainer');
 
                     htmx.process(tempLink);
-
                     tempLink.click();
                 } else {
                     window.location.href = targetUrl;
@@ -786,7 +731,37 @@ var EChartsConfig = {
         });
     },
 
-    // Export chart as image (requires additional setup)
+    // UPDATED: Method to refresh chart when theme changes
+    refreshChartTheme: function(chartInstance, config) {
+        if (!chartInstance) return;
+
+        // Force re-evaluation of theme-dependent colors
+        const option = this.getChartOption(config);
+
+        // Use notMerge: true to completely replace the option
+        chartInstance.setOption(option, {
+            notMerge: true,
+            replaceMerge: ['series', 'xAxis', 'yAxis'],
+            lazyUpdate: false
+        });
+    },
+
+    formatNumber: function(num, decimals = 0) {
+        if (num === null || num === undefined) return '0';
+        const factor = Math.pow(10, decimals);
+        const formatted = Math.round(num * factor) / factor;
+        return formatted.toLocaleString();
+    },
+
+    getDynamicColors: function(dataLength) {
+        const colors = [...this.defaultColors];
+        while (colors.length < dataLength) {
+            const hue = (colors.length * 137.5) % 360;
+            colors.push(`hsl(${hue}, 70%, 60%)`);
+        }
+        return colors.slice(0, dataLength);
+    },
+
     exportChart: function(chartInstance, filename = 'chart', format = 'png') {
         if (!chartInstance) return;
 
@@ -803,7 +778,6 @@ var EChartsConfig = {
     }
 };
 
-// Export for use in modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = EChartsConfig;
 }
