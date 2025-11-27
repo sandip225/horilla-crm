@@ -80,7 +80,15 @@
             window.currentDisplayOnly = "{{ request.GET.display_only|default:'' }}";
 
             window.hasActivityCreatePerm = {% if perms.activity.add_activity %}true{% else %}false{% endif %};
+            window.hasActivityChangeOwnPerm = {% if perms.activity.change_own_activity %}true{% else %}false{% endif %};
+            window.hasActivityDeletePerm = {% if perms.activity.delete_activity %}true{% else %}false{% endif %};
+            window.hasActivityViewOwnPerm = {% if perms.activity.view_own_activity %}true{% else %}false{% endif %};
+
+            window.statusFieldPermission = "{{ status_field_permission }}";
+
             window.hasUnavailabilityCreatePerm = {% if perms.timeline.add_useravailability %}true{% else %}false{% endif %};
+            window.hasUnavailabilityChangeOwnPerm = {% if perms.timeline.change_own_useravailability %}true{% else %}false{% endif %};
+            window.hasUnavailabilityDeletePerm = {% if perms.timeline.delete_userunavalability%}true{%else%}false{%endif%};
 
 
             function getCalendarUrl(baseUrl) {
@@ -341,18 +349,22 @@
                             // Icons for unavailability (only Edit and Delete)
                             icons = `
                                 <div class="flex gap-3 mt-2">
+                                ${ window.hasUnavailabilityChangeOwnPerm ? `
                                     <button
                                         onclick="editEvent('${event.id}', '${event.url}')"
                                         class="text-blue-600 hover:text-blue-800"
                                     >
                                         <i class="fas fa-edit"></i> {% trans 'Edit' %}
                                     </button>
+                                    ` : ''}
+                                    ${window.hasUnavailabilityDeletePerm ? `
                                     <button
                                         onclick="deleteEvent('${event.id}', '${event.extendedProps.deleteUrl}')"
                                         class="text-red-600 hover:text-red-800"
                                     >
                                         <i class="fas fa-trash"></i> {% trans 'Delete' %}
                                     </button>
+                                    ` : '' }
                                 </div>
                             `;
                         } else {
@@ -370,34 +382,43 @@
                                     <div class="flex gap-1"><strong>{% trans 'End Date' %}:</strong> ${event.end?.toLocaleString()}</div>
                                     <p><strong>{% trans 'Assigned to' %}:</strong> ${clientName}</p>
                                     <p><strong>{% trans 'Status' %}:</strong> ${status}</p>
-                                    ${status === "pending" ? `
+                                    ${status === "pending" && window.statusFieldPermission === "readwrite" ? `
+                                     <div class="radio-group">
                                         <label>
                                             <input type="radio" name="status" value="complete" onclick="updateEventStatus('${event.id}', 'completed')"> {% trans 'Mark as Complete' %}
+                                            <span class="custom-radio"></span>
                                         </label>
+                                    </div>
                                     ` : ""}
                                 </div>
                             `;
                             // Icons for other activities (Edit, Delete, Info)
                             icons = `
                                 <div class="flex gap-3 mt-2">
+                                ${window.hasActivityChangeOwnPerm ? `
                                     <button
                                         onclick="editEvent('${event.id}', '${event.url}')"
                                         class="text-blue-600 hover:text-blue-800"
                                     >
                                         <i class="fas fa-edit"></i> {% trans 'Edit' %}
                                     </button>
+                                    ` : '' }
+                                    ${window.hasActivityDeletePerm ? `
                                     <button
                                         onclick="deleteEvent('${event.id}', '${event.extendedProps.deleteUrl}')"
                                         class="text-red-600 hover:text-red-800"
                                     >
                                         <i class="fas fa-trash"></i> {% trans 'Delete' %}
                                     </button>
+                                    ` : '' }
+                                    ${window.hasActivityViewOwnPerm ? `
                                     <button
                                         onclick="showEventInfo('${event.id}', '${event.extendedProps.detailUrl}')"
                                         class="text-gray-600 hover:text-gray-800"
                                     >
                                         <i class="fas fa-info-circle"></i> {% trans 'Info' %}
                                     </button>
+                                    ` :  '' }
                                 </div>
                             `;
                         }
@@ -418,7 +439,6 @@
 
                             let content = '<div class="flex flex-col gap-2">';
 
-                            // Only add "New Activity" button if user has permission
                             if (window.hasActivityCreatePerm) {
                                 content += `
                                     <button
@@ -430,7 +450,6 @@
                                 `;
                             }
 
-                            // Only add "Mark as Unavailable" button if user has permission
                             if (window.hasUnavailabilityCreatePerm) {
                                 content += `
                                     <button

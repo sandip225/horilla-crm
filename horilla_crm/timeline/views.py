@@ -16,7 +16,8 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 
-from horilla_core.decorators import htmx_required
+from horilla_core.decorators import htmx_required, permission_required_or_denied
+from horilla_core.utils import get_user_field_permission
 from horilla_crm.activity.models import Activity
 from horilla_generics.views import HorillaSingleDeleteView, HorillaSingleFormView
 from horilla_utils.middlewares import _thread_local
@@ -60,6 +61,11 @@ class CalendarView(LoginRequiredMixin, TemplateView):
             for calendar in context["calendars"]:
                 pref = preferences.filter(calendar_type=calendar["id"]).first()
                 calendar["selected"] = pref.is_selected if pref else True
+
+        status_field_permission = get_user_field_permission(
+            self.request.user, Activity, "status"
+        )
+        context["status_field_permission"] = status_field_permission
 
         return context
 
@@ -281,6 +287,28 @@ class MarkCompletedView(LoginRequiredMixin, View):
                 )
 
             activity = Activity.objects.get(pk=event_id)
+
+            if not request.user.has_perm("activity.change_own_activity"):
+                return JsonResponse(
+                    {
+                        "status": "error",
+                        "message": "Permission denied: You don't have permission to change activities",
+                    },
+                    status=403,
+                )
+
+            status_permission = get_user_field_permission(
+                request.user, Activity, "status"
+            )
+            if status_permission != "readwrite":
+                return JsonResponse(
+                    {
+                        "status": "error",
+                        "message": "Permission denied: You don't have permission to change status",
+                    },
+                    status=403,
+                )
+
             if new_status not in dict(Activity.STATUS_CHOICES):
                 return JsonResponse(
                     {"status": "error", "message": "Invalid status"}, status=400
@@ -378,6 +406,9 @@ class UserAvailabilityFormView(LoginRequiredMixin, HorillaSingleFormView):
 
 
 @method_decorator(htmx_required, name="dispatch")
+@method_decorator(
+    permission_required_or_denied("timeline.delete_userunavailability"), name="dispatch"
+)
 class UserAvailabilityDeleteView(LoginRequiredMixin, HorillaSingleDeleteView):
     """View to handle deletion of user unavailability records."""
 
