@@ -12,6 +12,7 @@ from django.core.files.base import ContentFile
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils import timezone
 from django.utils import timezone as django_timezone
 from django.utils.decorators import method_decorator
@@ -98,6 +99,21 @@ class HorillaMailFormView(LoginRequiredMixin, TemplateView):
     template_name = "mail_form.html"
 
     def get(self, request, *args, **kwargs):
+        company = request.active_company
+        outgoing_mail_exists = HorillaMailConfiguration.objects.filter(
+            mail_channel="outgoing", company=company, is_active=True
+        ).exists()
+
+        if not outgoing_mail_exists:
+            return render(
+                request,
+                "mail_config_required.html",
+                {
+                    "message": _(
+                        "Cannot send email. Outgoing mail must be configured first."
+                    ),
+                },
+            )
         pk = kwargs.get("pk") or request.GET.get("pk")
         cancel = self.request.GET.get("cancel") == "true"
         if pk:
