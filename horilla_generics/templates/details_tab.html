@@ -20,7 +20,7 @@
                   readonly
                 />
 
-                {% if edit_field and field_name not in non_editable_fields and field_perm == "readwrite" %}
+                {% if edit_field and field_name not in non_editable_fields and field_perm == "readwrite" and can_update %}
                   <button
                     class="absolute right-3 top-0 bottom-0 m-auto cursor-pointer hover:scale-110 transition-transform"
                     hx-get="{% url 'horilla_generics:edit_field' pk=obj.pk field_name=field_name app_label=app_label model_name=model_name %}?pipeline_field={{ pipeline_field }}"
