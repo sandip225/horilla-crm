@@ -329,8 +329,15 @@ class ActivityDetailView(RecentlyViewedMixin, LoginRequiredMixin, HorillaDetailV
         show_actions = (
             self.request.user.is_superuser
             or self.request.user.has_perm("activity.change_activity")
-            or self.get_queryset().filter(owner=self.request.user).exists()
-            or self.get_queryset().filter(assigned_to=self.request.user).exists()
+            or (
+                (
+                    self.get_queryset().filter(owner=self.request.user).exists()
+                    or self.get_queryset()
+                    .filter(assigned_to=self.request.user)
+                    .exists()
+                )
+                and self.request.user.has_perm("activity.change_own_activity")
+            )
         )
 
         if show_actions:
