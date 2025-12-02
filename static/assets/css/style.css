@@ -1630,6 +1630,15 @@ input[type="radio"] {
     font-size: 15px;
   }
 }
+.tablebtn button:first-child{
+  border-radius: 5px 0 0 5px;
+}
+.tablebtn button:last-child{
+  border-radius: 0 5px 5px 0;
+}
+.tablebtn button:only-child {
+  border-radius: 5px;
+}
 
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-inner-spin-button,
