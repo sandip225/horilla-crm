@@ -65,7 +65,7 @@ class BranchNavbar(LoginRequiredMixin, HorillaNavView):
     def new_button(self):
         if self.request.user.has_perm("horilla_core.add_company"):
             return {
-                "url": f"""{ reverse_lazy('horilla_core:create_company')}?new=true""",
+                "url": f"""{ reverse_lazy('horilla_core:create_company_multi_step')}?new=true""",
                 "attrs": {"id": "branch-create"},
             }
 

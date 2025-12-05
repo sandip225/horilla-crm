@@ -29,7 +29,7 @@
                 <div class="flex gap-2 mb-2">
                     {% if can_change_company and request.active_company  %}
                         <button class="border rounded-md p-3 border-dark-50"
-                            hx-get="{% url 'horilla_core:edit_company' current_obj.pk %}?details=true"
+                            hx-get="{% url 'horilla_core:edit_company_multi_step' current_obj.pk %}?details=true"
                             hx-target="#modalBox"
                             hx-swap="innerHTML"
                             onclick="openModal()">

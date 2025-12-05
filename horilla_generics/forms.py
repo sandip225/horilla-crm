@@ -188,6 +188,10 @@ class HorillaMultiStepForm(forms.ModelForm):
 
         super().__init__(*args, **kwargs)
 
+        for field_name, field in self.fields.items():
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.required = False
+
         if self.request and self.request.FILES:
             self.files = self.request.FILES
 
@@ -307,8 +311,9 @@ class HorillaMultiStepForm(forms.ModelForm):
                 else:
                     try:
                         original_field = self._meta.model._meta.get_field(field_name)
-                        if hasattr(original_field, "blank"):
-                            # For file fields, only make them not required if they have existing content
+                        if isinstance(original_field, models.BooleanField):
+                            self.fields[field_name].required = False
+                        elif hasattr(original_field, "blank"):
                             if isinstance(
                                 original_field, (models.FileField, models.ImageField)
                             ):
@@ -1453,6 +1458,7 @@ class HorillaAttachmentForm(forms.ModelForm):
                     "summernote": {
                         "width": "100%",
                         "height": "300px",
+                        "airMode": False,
                         "styleTags": [
                             "p",
                             "blockquote",

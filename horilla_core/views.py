@@ -23,7 +23,12 @@ from django.views.generic import TemplateView
 
 from horilla import settings
 from horilla.exceptions import HorillaHttp404
-from horilla_core.forms import BusinessHourForm, HolidayForm
+from horilla_core.forms import (
+    BusinessHourForm,
+    CompanyFormClassSingle,
+    CompanyMultistepFormClass,
+    HolidayForm,
+)
 from horilla_core.initialiaze_database import InitializeDatabaseConditionView
 from horilla_core.models import (
     ActiveTab,
@@ -38,6 +43,7 @@ from horilla_core.models import (
 from horilla_generics.views import (
     HorillaListView,
     HorillaModalDetailView,
+    HorillaMultiStepFormView,
     HorillaSingleDeleteView,
     HorillaSingleFormView,
     HorillaTabView,
@@ -370,10 +376,17 @@ class ConmpanyInformationView(LoginRequiredMixin, TemplateView):
 
 
 @method_decorator(htmx_required, name="dispatch")
-class CompanyFormView(LoginRequiredMixin, HorillaSingleFormView):
+class CompanyMultiFormView(LoginRequiredMixin, HorillaMultiStepFormView):
+    """compnay Create/Update View"""
 
+    form_class = CompanyMultistepFormClass
     model = Company
     view_id = "company-form-view"
+
+    single_step_url_name = {
+        "create": "horilla_core:create_company",
+        "edit": "horilla_core:edit_company",
+    }
 
     def get_signal_kwargs(self):
         """
@@ -381,6 +394,91 @@ class CompanyFormView(LoginRequiredMixin, HorillaSingleFormView):
         Clients can add custom data without modifying source code.
         """
         return {}
+
+    @cached_property
+    def form_url(self):
+        """Form URL for company"""
+        pk = self.kwargs.get("pk") or self.request.GET.get("id")
+        if pk:
+            return reverse_lazy(
+                "horilla_core:edit_company_multi_step", kwargs={"pk": pk}
+            )
+        return reverse_lazy("horilla_core:create_company_multi_step")
+
+    def form_valid(self, form):
+        step = self.get_initial_step()
+
+        if step < self.total_steps:
+            return super().form_valid(form)
+
+        response = super().form_valid(form)
+        custom_kwargs = self.get_signal_kwargs()
+        signal_kwargs = {
+            "instance": self.object,
+            "request": self.request,
+            "view": self,
+            "is_new": not self.kwargs.get("pk"),
+            **custom_kwargs,
+        }
+        responses = company_created.send(sender=self.__class__, **signal_kwargs)
+
+        for receiver, response in responses:
+            if isinstance(response, HttpResponse):
+                wrapped_response = HttpResponse(
+                    f'<div id="{self.view_id}-container">{response.content.decode()}</div>'
+                )
+                return wrapped_response
+
+        if self.request.GET.get("details") == "true":
+            return HttpResponse(
+                "<script>$('#reloadButton').click();closeModal();</script>"
+            )
+
+        branches_view_url = reverse_lazy("horilla_core:branches_view")
+        response_html = (
+            f"<span "
+            f'hx-trigger="load" '
+            f'hx-get="{branches_view_url}" '
+            f'hx-select="#branches-view" '
+            f'hx-target="#branches-view" '
+            f'hx-swap="outerHTML" '
+            f'hx-on::after-request="closeModal();"'
+            f'hx-select-oob="#dropdown-companies">'
+            f"</span>"
+        )
+        return HttpResponse(mark_safe(response_html))
+
+    step_titles = {
+        "1": "Basic Information",
+        "2": "Business Details",
+        "3": "Location & Locale",
+        "4": "Preferences",
+    }
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
+
+@method_decorator(htmx_required, name="dispatch")
+class CompanyFormView(LoginRequiredMixin, HorillaSingleFormView):
+
+    model = Company
+    view_id = "company-form-view"
+    form_class = CompanyFormClassSingle
+
+    def get_signal_kwargs(self):
+        """
+        Extension point: Override this method to pass additional data to signal.
+        Clients can add custom data without modifying source code.
+        """
+        return {}
+
+    multi_step_url_name = {
+        "create": "horilla_core:create_company_multi_step",
+        "edit": "horilla_core:edit_company_multi_step",
+    }
 
     @cached_property
     def form_url(self):
@@ -403,7 +501,10 @@ class CompanyFormView(LoginRequiredMixin, HorillaSingleFormView):
 
         for receiver, response in responses:
             if isinstance(response, HttpResponse):
-                return response
+                wrapped_response = HttpResponse(
+                    f'<div id="{self.view_id}-container">{response.content.decode()}</div>'
+                )
+                return wrapped_response
 
         if self.request.GET.get("details") == "true":
             return HttpResponse(
