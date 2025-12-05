@@ -852,7 +852,6 @@ class OpportunitySplitType(HorillaCoreModel):
 
     split_label = models.CharField(
         max_length=255,
-        unique=True,
         verbose_name=_("Split Label"),
         help_text=_("Name of the split type (e.g., Revenue, Overlay)"),
     )

@@ -538,7 +538,7 @@ class Department(HorillaCoreModel):
     """
 
     department_name = models.CharField(
-        max_length=50, unique=True, blank=False, verbose_name=_("Department Name")
+        max_length=50, blank=False, verbose_name=_("Department Name")
     )
     description = models.TextField(blank=True, null=True, verbose_name=_("Description"))
 
@@ -549,6 +549,7 @@ class Department(HorillaCoreModel):
 
         verbose_name = _("Department")
         verbose_name_plural = _("Departments")
+        unique_together = (("department_name", "company"),)
 
     def __str__(self):
         return str(self.department_name)
@@ -2621,12 +2622,6 @@ class RecycleBin(models.Model):
 
         if "__str__" in data and data["__str__"]:
             return data["__str__"]
-
-    def get_edit_url(self):
-        """
-        This method to get edit url
-        """
-        return reverse_lazy("campaigns:edit_campaign_member", kwargs={"pk": self.pk})
 
     def get_delete_url(self):
         """
