@@ -739,7 +739,7 @@ def is_open_collapse(context, *url_names):
 @register.simple_tag(takes_context=True)
 def has_perm(context, perm_name):
     """
-    Usage: {% has_perm "leads.view_lead" as can_view_leads %}
+    Usage: {% has_perm "horilla_core.view_horillauser" as can_view_horillauser %}
     """
     user = context["request"].user
     return user.has_perm(perm_name)
@@ -882,8 +882,6 @@ def display_field_value(obj, field_name, user):
 def format_currency(value, user):
     """
     Template filter for currency formatting
-
-    Usage: {{ opportunity.amount|format_currency:request.user }}
     """
     if not value:
         return ""

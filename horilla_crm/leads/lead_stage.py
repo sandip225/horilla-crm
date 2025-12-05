@@ -341,9 +341,8 @@ class UpdateLeadStageOrderView(LoginRequiredMixin, View):
                     LeadStatus.objects.filter(id=status.id).update(order=order)
 
 
-@method_decorator(htmx_required(login=False), name="dispatch")
-@method_decorator(htmx_required(login=False), name="dispatch")
-class LoadLeadStagesView(View):
+@method_decorator(htmx_required(), name="dispatch")
+class LoadLeadStagesView(LoginRequiredMixin, View):
     """View to display the lead stages modal."""
 
     def get(self, request, company_id):
@@ -451,8 +450,8 @@ class LoadLeadStagesView(View):
         return HttpResponse(modal_content)
 
 
-@method_decorator(htmx_required(login=False), name="dispatch")
-class CustomStagesFormView(View):
+@method_decorator(htmx_required(), name="dispatch")
+class CustomStagesFormView(LoginRequiredMixin, View):
     """View to display the custom stages form."""
 
     def get(self, request, company_id):
@@ -519,7 +518,7 @@ class CustomStagesFormView(View):
             context["hx_select"] = "#initialize-opportunity-stages"
 
         modal_content = render_to_string(
-            "branches/custom_stages_form.html",
+            "lead_status/custom_stages_form.html",
             context,
             request=request,
         )
@@ -527,8 +526,8 @@ class CustomStagesFormView(View):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-@method_decorator(htmx_required(login=False), name="dispatch")
-class SaveCustomStagesView(View, ProgressStepsMixin):
+@method_decorator(htmx_required(), name="dispatch")
+class SaveCustomStagesView(LoginRequiredMixin, View, ProgressStepsMixin):
     """View to handle saving custom lead stages during company creation."""
 
     current_step = 6
@@ -608,8 +607,8 @@ class SaveCustomStagesView(View, ProgressStepsMixin):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-@method_decorator(htmx_required(login=False), name="dispatch")
-class AddStageView(View):
+@method_decorator(htmx_required(), name="dispatch")
+class AddStageView(LoginRequiredMixin, View):
     """View to handle adding a new stage to the custom stages form."""
 
     def get(self, request, company_id):
@@ -642,8 +641,8 @@ class AddStageView(View):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-@method_decorator(htmx_required(login=False), name="dispatch")
-class RemoveStageView(View):
+@method_decorator(htmx_required(), name="dispatch")
+class RemoveStageView(LoginRequiredMixin, View):
     """View to handle removing a stage from the custom stages form."""
 
     def post(self, request, company_id):
@@ -680,7 +679,7 @@ class RemoveStageView(View):
 
         return HttpResponse(
             render_to_string(
-                "branches/custom_stages_form.html",
+                "lead_status/custom_stages_form.html",
                 {
                     "company": company,
                     "company_stages": {company_id: {"stages": stages}},
@@ -692,8 +691,8 @@ class RemoveStageView(View):
 
 
 @method_decorator(csrf_exempt, name="dispatch")
-@method_decorator(htmx_required(login=False), name="dispatch")
-class CreateStageGroupView(View, ProgressStepsMixin):
+@method_decorator(htmx_required(), name="dispatch")
+class CreateStageGroupView(LoginRequiredMixin, View, ProgressStepsMixin):
     """View to handle saving custom lead stages during database setup."""
 
     current_step = 6
@@ -797,7 +796,7 @@ BASE_STEPS.append({"step": 5, "title": "Lead Stages"})
 BASE_STEPS.append({"step": 6, "title": "Opportunity Stages"})
 
 
-class InitializeDatabaseLeadStages(View, ProgressStepsMixin):
+class InitializeDatabaseLeadStages(LoginRequiredMixin, View, ProgressStepsMixin):
     """View to handle the initialization of lead stages during database setup."""
 
     current_step = 5

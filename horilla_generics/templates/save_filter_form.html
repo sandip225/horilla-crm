@@ -36,8 +36,8 @@
           {% endfor %}
         </div>
       {% endif %}
-      <input type="hidden" name="model_name" value="{{ form.initial.model_name|default:'Lead' }}">
-      <input type="hidden" name="main_url" value="{{ main_url|default:'' }}">
+      <input type="hidden" name="model_name" value="{{ form.initial.model_name }}">
+      <input type="hidden" name="main_url" value="{{ main_url }}">
       {% for key, values in query_params.items %}
         {% for value in values %}
           <input type="hidden" name="{{ key }}" value="{{ value }}">
