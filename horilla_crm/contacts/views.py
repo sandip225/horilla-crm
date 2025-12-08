@@ -22,6 +22,7 @@ from horilla_core.decorators import (
     permission_required,
     permission_required_or_denied,
 )
+from horilla_core.utils import is_owner
 from horilla_crm.contacts.filters import ContactFilter
 from horilla_crm.contacts.models import Contact, ContactAccountRelationship
 from horilla_crm.contacts.signals import set_contact_account_id
@@ -139,48 +140,43 @@ class ContactListView(LoginRequiredMixin, HorillaListView):
 
     @cached_property
     def actions(self):
-        """Actions for contact list view"""
-        actions = []
-
-        show_actions = (
-            self.request.user.is_superuser
-            or self.request.user.has_perm("contacts.change_contact")
-            or self.get_queryset().filter(contact_owner=self.request.user).exists()
-        )
-        if show_actions:
-            actions.extend(
-                [
-                    {
-                        "action": _("Edit"),
-                        "src": "assets/icons/edit.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                        hx-get="{get_edit_url}?new=true"
-                        hx-target="#modalBox"
-                        hx-swap="innerHTML"
-                        onclick="openModal()"
-                        """,
-                    },
-                    {
-                        "action": _("Change Owner"),
-                        "src": "assets/icons/a2.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                        hx-get="{get_change_owner_url}"
-                        hx-target="#modalBox"
-                        hx-swap="innerHTML"
-                        onclick="openModal()"
-                        """,
-                    },
-                ]
-            )
-            if self.request.user.has_perm("contacts.delete_contact"):
-                actions.append(
-                    {
-                        "action": "Delete",
-                        "src": "assets/icons/a4.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
+        """Return available actions for the contact if the user has the necessary permissions."""
+        contact_permissions = {
+            "permission": "contacts.change_contact",
+            "own_permission": "contacts.change_own_contact",
+            "owner_field": "contact_owner",
+        }
+        actions = [
+            {
+                **contact_permissions,
+                "action": _("Edit"),
+                "src": "assets/icons/edit.svg",
+                "img_class": "w-4 h-4",
+                "attrs": """
+                              hx-get="{get_edit_url}?new=true"
+                              hx-target="#modalBox"
+                              hx-swap="innerHTML"
+                              onclick="openModal()"
+                             """,
+            },
+            {
+                **contact_permissions,
+                "action": _("Change Owner"),
+                "src": "assets/icons/a2.svg",
+                "img_class": "w-4 h-4",
+                "attrs": """
+                            hx-get="{get_change_owner_url}"
+                            hx-target="#modalBox"
+                            hx-swap="innerHTML"
+                            onclick="openModal()"
+                            """,
+            },
+            {
+                "action": "Delete",
+                "src": "assets/icons/a4.svg",
+                "img_class": "w-4 h-4",
+                "permission": "contacts.delete_contact",
+                "attrs": """
                             hx-post="{get_delete_url}"
                             hx-target="#deleteModeBox"
                             hx-swap="innerHTML"
@@ -188,8 +184,21 @@ class ContactListView(LoginRequiredMixin, HorillaListView):
                             hx-vals='{{"check_dependencies": "true"}}'
                             onclick="openDeleteModeModal()"
                         """,
-                    }
-                )
+            },
+            {
+                "action": _("Duplicate"),
+                "src": "assets/icons/duplicate.svg",
+                "img_class": "w-4 h-4",
+                "permission": "contacts.add_contact",
+                "attrs": """
+                              hx-get="{get_duplicate_url}?duplicate=true"
+                              hx-target="#modalBox"
+                              hx-swap="innerHTML"
+                              onclick="openModal()"
+                             """,
+            },
+        ]
+
         return actions
 
     @cached_property
@@ -200,19 +209,17 @@ class ContactListView(LoginRequiredMixin, HorillaListView):
         if "section" in self.request.GET:
             query_params["section"] = self.request.GET.get("section")
         query_string = urlencode(query_params)
-        attrs = {}
-        if self.request.user.has_perm(
-            "contacts.view_contact"
-        ) or self.request.user.has_perm("contacts.view_own_contact"):
-            attrs = {
-                "hx-get": f"{{get_detail_url}}?{query_string}",
-                "hx-target": "#mainContent",
-                "hx-swap": "outerHTML",
-                "hx-push-url": "true",
-                "hx-select": "#mainContent",
-                "style": "cursor:pointer",
-                "class": "hover:text-primary-600",
-            }
+
+        attrs = {
+            "hx-get": f"{{get_detail_url}}?{query_string}",
+            "hx-target": "#mainContent",
+            "hx-swap": "outerHTML",
+            "hx-push-url": "true",
+            "hx-select": "#mainContent",
+            "permission": "contacts.view_contact",
+            "own_permission": "contacts.view_own_contact",
+            "owner_field": "contact_owner",
+        }
         return [
             {
                 "first_name": {
@@ -222,7 +229,6 @@ class ContactListView(LoginRequiredMixin, HorillaListView):
         ]
 
 
-# @method_decorator(htmx_required, name="dispatch")
 @method_decorator(
     permission_required_or_denied("contacts.delete_contact", modal=True),
     name="dispatch",
@@ -254,63 +260,9 @@ class ContactKanbanView(LoginRequiredMixin, HorillaKanbanView):
     search_url = reverse_lazy("contacts:contact_list_view")
     main_url = reverse_lazy("contacts:contacts_view")
     group_by_field = "contact_source"
+    actions = ContactListView.actions
 
     columns = ["first_name", "title", "email", "phone", "birth_date"]
-
-    @cached_property
-    def actions(self):
-        """Actions for contact kanban"""
-        actions = []
-
-        show_actions = (
-            self.request.user.is_superuser
-            or self.request.user.has_perm("contacts.change_contact")
-            or self.get_queryset().filter(contact_owner=self.request.user).exists()
-        )
-        if show_actions:
-            actions.extend(
-                [
-                    {
-                        "action": _("Edit"),
-                        "src": "assets/icons/edit.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                        hx-get="{get_edit_url}?new=true"
-                        hx-target="#modalBox"
-                        hx-swap="innerHTML"
-                        onclick="openModal()"
-                        """,
-                    },
-                    {
-                        "action": _("Change Owner"),
-                        "src": "assets/icons/a2.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                        hx-get="{get_change_owner_url}"
-                        hx-target="#modalBox"
-                        hx-swap="innerHTML"
-                        onclick="openModal()"
-                        """,
-                    },
-                ]
-            )
-            if self.request.user.has_perm("contacts.delete_contact"):
-                actions.append(
-                    {
-                        "action": "Delete",
-                        "src": "assets/icons/a4.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                            hx-post="{get_delete_url}"
-                            hx-target="#deleteModeBox"
-                            hx-swap="innerHTML"
-                            hx-trigger="click"
-                            hx-vals='{{"check_dependencies": "true"}}'
-                            onclick="openDeleteModeModal()"
-                        """,
-                    }
-                )
-        return actions
 
     @cached_property
     def kanban_attrs(self):
@@ -504,62 +456,8 @@ class ContactDetailView(RecentlyViewedMixin, LoginRequiredMixin, HorillaDetailVi
         "assistant",
     ]
 
-    @cached_property
-    def actions(self):
-        """Actions for contact detail view"""
-        actions = []
-
-        show_actions = (
-            self.request.user.is_superuser
-            or self.request.user.has_perm("contacts.change_contact")
-            or self.get_queryset().filter(contact_owner=self.request.user).exists()
-        )
-        if show_actions:
-            actions.extend(
-                [
-                    {
-                        "action": _("Edit"),
-                        "src": "assets/icons/edit.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                        hx-get="{get_edit_url}?new=true"
-                        hx-target="#modalBox"
-                        hx-swap="innerHTML"
-                        onclick="openModal()"
-                        """,
-                    },
-                    {
-                        "action": _("Change Owner"),
-                        "src": "assets/icons/a2.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                        hx-get="{get_change_owner_url}"
-                        hx-target="#modalBox"
-                        hx-swap="innerHTML"
-                        onclick="openModal()"
-                        """,
-                    },
-                ]
-            )
-            if self.request.user.has_perm("contacts.delete_contact"):
-                actions.append(
-                    {
-                        "action": "Delete",
-                        "src": "assets/icons/a4.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                            hx-post="{get_delete_url}"
-                            hx-target="#deleteModeBox"
-                            hx-swap="innerHTML"
-                            hx-trigger="click"
-                            hx-vals='{{"check_dependencies": "true"}}'
-                            onclick="openDeleteModeModal()"
-                        """,
-                    }
-                )
-        return actions
-
     tab_url = reverse_lazy("contacts:contact_detail_view_tabs")
+    actions = ContactListView.actions
 
 
 @method_decorator(
@@ -586,21 +484,6 @@ class ContactDetailViewTabs(LoginRequiredMixin, HorillaDetailTabView):
         "notes_attachments": "contacts:contacts_notes_attachements",
         "history": "contacts:contact_history_tab",
     }
-
-    def get(self, request, *args, **kwargs):
-        user = self.request.user
-        contact_id = self.object_id
-
-        is_owner = Contact.objects.filter(
-            contact_owner_id=request.user, pk=contact_id
-        ).exists()
-        has_permission = user.has_perm("contacts.view_contact") or user.has_perm(
-            "contacts.view_own_contact"
-        )
-
-        if not (is_owner or has_permission):
-            return render(request, "error/403.html")
-        return super().get(request, *args, **kwargs)
 
 
 @method_decorator(
@@ -737,13 +620,30 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                 "members__get_member_status_display",
                             ),
                         ],
-                        "can_add": True,
+                        "can_add": self.request.user.has_perm(
+                            "campaigns.add_campaignmember"
+                        )
+                        and (
+                            (
+                                is_owner(Contact, pk)
+                                and self.request.user.has_perm(
+                                    "contacts.change_own_contact"
+                                )
+                            )
+                            or self.request.user.has_perm("contacts.change_contact")
+                        ),
                         "add_url": reverse_lazy("campaigns:add_contact_to_campaign"),
                         "actions": [
                             {
                                 "action": "edit",
                                 "src": "/assets/icons/edit.svg",
                                 "img_class": "w-4 h-4",
+                                "permission": "campaigns.change_campaignmember",
+                                "own_permission": "campaigns.change_own_campaignmember",
+                                "owner_field": "created_by",
+                                "intermediate_model": "CampaignMember",
+                                "intermediate_field": "campaign",
+                                "parent_field": "contact",
                                 "attrs": """
                                         hx-get="{get_edit_contact_to_campaign_url_for_contact}?new=true"
                                         hx-target="#modalBox"
@@ -757,6 +657,7 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                     "action": "Delete",
                                     "src": "assets/icons/a4.svg",
                                     "img_class": "w-4 h-4",
+                                    "permission": "campaigns.delete_campaignmember",
                                     "attrs": """
                                         hx-post="{get_delete_contact_to_campaign_url_for_contact}"
                                         hx-target="#deleteModeBox"
@@ -766,23 +667,20 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                         onclick="openDeleteModeModal()"
                                     """,
                                 }
-                                if self.request.user.has_perm(
-                                    "campaigns.delete_campaign"
-                                )
-                                else {}
                             ),
                         ],
                         "col_attrs": [
                             (
                                 {
                                     "campaign_name": {
-                                        "style": "cursor:pointer",
-                                        "class": "hover:text-primary-600",
                                         "hx-get": f"{{get_detail_view_url}}?referrer_app={self.model._meta.app_label}&referrer_model={self.model._meta.model_name}&referrer_id={pk}&referrer_url={referrer_url}&{query_string}",
                                         "hx-target": "#mainContent",
                                         "hx-swap": "outerHTML",
                                         "hx-push-url": "true",
                                         "hx-select": "#mainContent",
+                                        "permission": "campaigns.view_campaign",
+                                        "own_permission": "campaigns.view_own_campaign",
+                                        "owner_field": "campaign_owner",
                                     }
                                 }
                                 if self.request.user.has_perm("campaigns.view_campaign")
@@ -795,7 +693,7 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                     "app_label": "opportunities",
                     "model_name": "Opportunity",
                     "intermediate_model": "OpportunityContactRole",
-                    "intermediate_field": "opportunity_roles",
+                    "intermediate_field": "opportunity",
                     "related_field": "contact",
                     "config": {
                         "title": _("Related Opportunities"),
@@ -843,7 +741,20 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                 "probability",
                             ),
                         ],
-                        "can_add": True,
+                        "can_add": self.request.user.has_perm(
+                            "opportunities.add_opportunitycontactrole"
+                        )
+                        and (
+                            (
+                                is_owner(Contact, pk)
+                                and self.request.user.has_perm(
+                                    "opportunities.change_own_opportunity"
+                                )
+                            )
+                            or self.request.user.has_perm(
+                                "opportunities.change_opportunity"
+                            )
+                        ),
                         "add_url": reverse_lazy(
                             "opportunities:related_contact_opportunity_create"
                         ),
@@ -852,6 +763,12 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                 "action": "edit",
                                 "src": "/assets/icons/edit.svg",
                                 "img_class": "w-4 h-4",
+                                "permission": "opportunities.change_opportunitycontactrole",
+                                "own_permission": "opportunities.change_own_opportunitycontactrole",
+                                "owner_field": "created_by",
+                                "intermediate_model": "OpportunityContactRole",
+                                "intermediate_field": "opportunity",
+                                "parent_field": "contact",
                                 "attrs": """
                                     hx-get="{get_edit_url}?new=true"
                                     hx-target="#modalBox"
@@ -865,6 +782,7 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                     "action": "Delete",
                                     "src": "assets/icons/a4.svg",
                                     "img_class": "w-4 h-4",
+                                    "permission": "opportunities.delete_opportunitycontactrole",
                                     "attrs": """
                                         hx-post="{get_delete_url}"
                                         hx-target="#deleteModeBox"
@@ -874,29 +792,22 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                         onclick="openDeleteModeModal()"
                                     """,
                                 }
-                                if self.request.user.has_perm(
-                                    "opportunities.delete_opportunity"
-                                )
-                                else {}
                             ),
                         ],
                         "col_attrs": [
                             (
                                 {
                                     "name": {
-                                        "style": "cursor:pointer",
-                                        "class": "hover:text-primary-600",
                                         "hx-get": f"{{get_detail_url}}?referrer_app={self.model._meta.app_label}&referrer_model={self.model._meta.model_name}&referrer_id={pk}&referrer_url={referrer_url}&{query_string}",
                                         "hx-target": "#mainContent",
                                         "hx-swap": "outerHTML",
                                         "hx-push-url": "true",
                                         "hx-select": "#mainContent",
+                                        "permission": "opportunities.view_opportunity",
+                                        "own_permission": "opportunities.view_own_opportunity",
+                                        "owner_field": "owner",
                                     }
                                 }
-                                if self.request.user.has_perm(
-                                    "opportunities.view_opportunity"
-                                )
-                                else {}
                             )
                         ],
                     },
@@ -944,6 +855,12 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                 "action": _("Edit"),
                                 "src": "assets/icons/edit.svg",
                                 "img_class": "w-4 h-4",
+                                "permission": "contacts.change_contactaccountrelationship",
+                                "own_permission": "contacts.change_own_contactaccountrelationship",
+                                "owner_field": "created_by",
+                                "intermediate_model": "ContactAccountRelationship",
+                                "intermediate_field": "account",
+                                "parent_field": "contact",
                                 "attrs": """
                                     hx-get="{get_edit_contact_account_relation_url}?new=true"
                                     hx-target="#modalBox"
@@ -956,6 +873,7 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                     "action": "Delete",
                                     "src": "assets/icons/a4.svg",
                                     "img_class": "w-4 h-4",
+                                    "permission": "contacts.delete_contactaccountrelationship",
                                     "attrs": """
                                         hx-post="{get_delete_related_accounts_url}"
                                         hx-target="#deleteModeBox"
@@ -965,25 +883,22 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                             onclick="openDeleteModeModal()"
                                     """,
                                 }
-                                if self.request.user.has_perm("accounts.delete_account")
-                                else {}
                             ),
                         ],
                         "col_attrs": [
                             (
                                 {
                                     "name": {
-                                        "style": "cursor:pointer",
-                                        "class": "hover:text-primary-600",
                                         "hx-get": f"{{get_detail_url}}?referrer_app={self.model._meta.app_label}&referrer_model={self.model._meta.model_name}&referrer_id={pk}&referrer_url={referrer_url}&{query_string}",
                                         "hx-target": "#mainContent",
                                         "hx-swap": "outerHTML",
                                         "hx-push-url": "true",
                                         "hx-select": "#mainContent",
+                                        "permission": "accounts.view_account",
+                                        "own_permission": "accounts.view_own_account",
+                                        "owner_field": "account_owner",
                                     }
                                 }
-                                if self.request.user.has_perm("accounts.view_account")
-                                else {}
                             )
                         ],
                     },
@@ -991,7 +906,11 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
             },
             "child_contacts": {
                 "title": _("Child Contacts"),
-                "can_add": True,
+                "can_add": (
+                    is_owner(Contact, pk)
+                    and self.request.user.has_perm("contacts.change_own_contact")
+                )
+                or self.request.user.has_perm("contacts.change_contact"),
                 "add_url": reverse_lazy("contacts:create_child_contact"),
                 "columns": [
                     (Contact._meta.get_field("title").verbose_name, "title"),
@@ -1005,6 +924,9 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                             "action": "Delete",
                             "src": "assets/icons/a4.svg",
                             "img_class": "w-4 h-4",
+                            "permission": "contacts.change_contact",
+                            "own_permission": "contacts.change_own_contact",
+                            "owner_field": "contact_owner",
                             "attrs": """
                             hx-delete="{get_child_contact_delete_url}"
                             hx-on:click="hxConfirm(this,'Are you sure you want to remove this child contact relationship?')"
@@ -1013,25 +935,22 @@ class ContactRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                             hx-trigger="confirmed"
                     """,
                         }
-                        if self.request.user.has_perm("contacts.delete_contact")
-                        else {}
                     ),
                 ],
                 "col_attrs": [
                     (
                         {
                             "title": {
-                                "style": "cursor:pointer",
-                                "class": "hover:text-primary-600",
                                 "hx-get": f"{{get_detail_url}}?referrer_app={self.model._meta.app_label}&referrer_model={self.model._meta.model_name}&referrer_id={pk}&referrer_url={referrer_url}&{query_string}",
                                 "hx-target": "#mainContent",
                                 "hx-swap": "outerHTML",
                                 "hx-push-url": "true",
                                 "hx-select": "#mainContent",
+                                "permission": "contacts.view_contact",
+                                "own_permission": "contacts.view_own_contact",
+                                "owner_field": "contact_owner",
                             }
                         }
-                        if self.request.user.has_perm("contacts.view_contact")
-                        else {}
                     )
                 ],
             },

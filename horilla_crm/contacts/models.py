@@ -168,6 +168,14 @@ class Contact(HorillaCoreModel):
 
         return reverse_lazy("contacts:contact_change_owner", kwargs={"pk": self.pk})
 
+    def get_duplicate_url(self):
+        """
+        This method to get edit url
+        """
+        return reverse_lazy(
+            "contacts:contact_single_update_form", kwargs={"pk": self.pk}
+        )
+
     def get_detail_url(self):
         """
         This method to get detail view url
