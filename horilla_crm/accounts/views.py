@@ -33,6 +33,7 @@ from horilla_core.decorators import (
     permission_required,
     permission_required_or_denied,
 )
+from horilla_core.utils import is_owner
 from horilla_crm.accounts.filters import AccountFilter
 from horilla_crm.accounts.forms import (
     AccountFormClass,
@@ -150,19 +151,16 @@ class AccountListView(LoginRequiredMixin, HorillaListView):
         if "section" in self.request.GET:
             query_params["section"] = self.request.GET.get("section")
         query_string = urlencode(query_params)
-        attrs = {}
-        if self.request.user.has_perm(
-            "accounts.view_account"
-        ) or self.request.user.has_perm("accounts.view_own_account"):
-            attrs = {
-                "hx-get": f"{{get_detail_url}}?{query_string}",
-                "hx-target": "#mainContent",
-                "hx-swap": "outerHTML",
-                "hx-push-url": "true",
-                "hx-select": "#mainContent",
-                "style": "cursor:pointer",
-                "class": "hover:text-primary-600",
-            }
+        attrs = {
+            "hx-get": f"{{get_detail_url}}?{query_string}",
+            "hx-target": "#mainContent",
+            "hx-swap": "outerHTML",
+            "hx-push-url": "true",
+            "hx-select": "#mainContent",
+            "permission": "accounts.view_account",
+            "own_permission": "accounts.view_own_account",
+            "owner_field": "account_owner",
+        }
         return [
             {
                 "name": {
@@ -176,47 +174,42 @@ class AccountListView(LoginRequiredMixin, HorillaListView):
     @cached_property
     def actions(self):
         """Return available actions for the account if the user has the necessary permissions."""
-        actions = []
-
-        show_actions = (
-            self.request.user.is_superuser
-            or self.request.user.has_perm("accounts:change_account")
-            or self.get_queryset().filter(account_owner=self.request.user).exists()
-        )
-        if show_actions:
-            actions.extend(
-                [
-                    {
-                        "action": _("Edit"),
-                        "src": "assets/icons/edit.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
+        acc_permissions = {
+            "permission": "accounts.change_account",
+            "own_permission": "accounts.change_own_account",
+            "owner_field": "account_owner",
+        }
+        actions = [
+            {
+                **acc_permissions,
+                "action": _("Edit"),
+                "src": "assets/icons/edit.svg",
+                "img_class": "w-4 h-4",
+                "attrs": """
                               hx-get="{get_edit_url}?new=true"
                               hx-target="#modalBox"
                               hx-swap="innerHTML"
                               onclick="openModal()"
                              """,
-                    },
-                    {
-                        "action": _("Change Owner"),
-                        "src": "assets/icons/a2.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
+            },
+            {
+                **acc_permissions,
+                "action": _("Change Owner"),
+                "src": "assets/icons/a2.svg",
+                "img_class": "w-4 h-4",
+                "attrs": """
                             hx-get="{get_change_owner_url}"
                             hx-target="#modalBox"
                             hx-swap="innerHTML"
                             onclick="openModal()"
                             """,
-                    },
-                ]
-            )
-        if self.request.user.has_perm("accounts.delete_account"):
-            actions.append(
-                {
-                    "action": "Delete",
-                    "src": "assets/icons/a4.svg",
-                    "img_class": "w-4 h-4",
-                    "attrs": """
+            },
+            {
+                "action": "Delete",
+                "src": "assets/icons/a4.svg",
+                "img_class": "w-4 h-4",
+                "permission": "accounts.delete_account",
+                "attrs": """
                             hx-post="{get_delete_url}"
                             hx-target="#deleteModeBox"
                             hx-swap="innerHTML"
@@ -224,22 +217,20 @@ class AccountListView(LoginRequiredMixin, HorillaListView):
                             hx-vals='{{"check_dependencies": "true"}}'
                             onclick="openDeleteModeModal()"
                         """,
-                }
-            )
-        if self.request.user.has_perm("accounts.add_account"):
-            actions.append(
-                {
-                    "action": _("Duplicate"),
-                    "src": "assets/icons/duplicate.svg",
-                    "img_class": "w-4 h-4",
-                    "attrs": """
+            },
+            {
+                "action": _("Duplicate"),
+                "src": "assets/icons/duplicate.svg",
+                "img_class": "w-4 h-4",
+                "permission": "accounts.add_account",
+                "attrs": """
                               hx-get="{get_duplicate_url}?duplicate=true"
                               hx-target="#modalBox"
                               hx-swap="innerHTML"
                               onclick="openModal()"
                              """,
-                },
-            )
+            },
+        ]
 
         return actions
 
@@ -287,60 +278,7 @@ class AccountsKanbanView(LoginRequiredMixin, HorillaKanbanView):
         "annual_revenue",
     ]
 
-    @cached_property
-    def actions(self):
-        """Return available actions for the account if the user has the necessary permissions."""
-        actions = []
-
-        show_actions = (
-            self.request.user.is_superuser
-            or self.request.user.has_perm("accounts:change_account")
-            or self.get_queryset().filter(account_owner=self.request.user).exists()
-        )
-        if show_actions:
-            actions.extend(
-                [
-                    {
-                        "action": _("Edit"),
-                        "src": "assets/icons/edit.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                              hx-get="{get_edit_url}?new=true"
-                              hx-target="#modalBox"
-                              hx-swap="innerHTML"
-                              onclick="openModal()"
-                             """,
-                    },
-                    {
-                        "action": _("Change Owner"),
-                        "src": "assets/icons/a2.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                            hx-get="{get_change_owner_url}"
-                            hx-target="#modalBox"
-                            hx-swap="innerHTML"
-                            onclick="openModal()"
-                            """,
-                    },
-                ]
-            )
-            if self.request.user.has_perm("accounts.delete_account"):
-                actions.append(
-                    {
-                        "action": "Delete",
-                        "src": "assets/icons/a4.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                                hx-post="{get_delete_url}"
-                                hx-target="#deleteModeBox"
-                                hx-swap="innerHTML"
-                                hx-trigger="click"
-                                hx-vals='{{"check_dependencies": "true"}}'
-                                onclick="openDeleteModeModal()"
-                            """,
-                    }
-                )
-        return actions
+    actions = AccountListView.actions
 
     def no_record_add_button(self):
         """Return the 'New Account' button if the user has add permission."""
@@ -354,23 +292,24 @@ class AccountsKanbanView(LoginRequiredMixin, HorillaKanbanView):
     @cached_property
     def kanban_attrs(self):
         """Return kanban card attributes for HTMX interactions if the user can view accounts."""
-        query_params = self.request.GET.dict()
+
+        # Build query params
         query_params = {}
         if "section" in self.request.GET:
             query_params["section"] = self.request.GET.get("section")
+
         query_string = urlencode(query_params)
-        if self.request.user.has_perm(
-            "accounts.view_account"
-        ) or self.request.user.has_perm("accounts.view_own_account"):
-            return f"""
-                    hx-get="{{get_detail_url}}?{query_string}"
-                    hx-target="#mainContent"
-                    hx-swap="outerHTML"
-                    hx-push-url="true"
-                    hx-select="#mainContent"
-                    style ="cursor:pointer",
-                    """
-        return None
+
+        return {
+            "hx-get": f"{{get_detail_url}}?{query_string}",
+            "hx-target": "#mainContent",
+            "hx-swap": "outerHTML",
+            "hx-push-url": "true",
+            "hx-select": "#mainContent",
+            "permission": "accounts.view_account",
+            "own_permission": "accounts.view_own_account",
+            "owner_field": "account_owner",
+        }
 
 
 @method_decorator(htmx_required, name="dispatch")
@@ -490,67 +429,7 @@ class AccountDetailView(RecentlyViewedMixin, LoginRequiredMixin, HorillaDetailVi
     ]
     tab_url = reverse_lazy("accounts:account_detail_view_tabs")
 
-    @cached_property
-    def actions(self):
-        """Return available actions for the account if the user has the necessary permissions."""
-        actions = []
-
-        show_actions = (
-            self.request.user.is_superuser
-            or self.request.user.has_perm("accounts:change_account")
-            or self.get_queryset().filter(account_owner=self.request.user).exists()
-        )
-        if show_actions:
-            actions.extend(
-                [
-                    {
-                        "action": _("Edit"),
-                        "src": "assets/icons/edit.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                              hx-get="{get_edit_url}?new=true"
-                              hx-target="#modalBox"
-                              hx-swap="innerHTML"
-                              onclick="openModal()"
-                             """,
-                    },
-                    {
-                        "action": _("Change Owner"),
-                        "src": "assets/icons/a2.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                            hx-get="{get_change_owner_url}"
-                            hx-target="#modalBox"
-                            hx-swap="innerHTML"
-                            onclick="openModal()"
-                            """,
-                    },
-                ]
-            )
-            if self.request.user.has_perm("accounts.delete_account"):
-                actions.append(
-                    {
-                        "action": "Delete",
-                        "src": "assets/icons/a4.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                                hx-post="{get_delete_url}"
-                                hx-target="#deleteModeBox"
-                                hx-swap="innerHTML"
-                                hx-trigger="click"
-                                hx-vals='{{"check_dependencies": "true"}}'
-                                onclick="openDeleteModeModal()"
-                            """,
-                    }
-                )
-        return actions
-
-    def get(self, request, *args, **kwargs):
-        if not self.model.objects.filter(
-            account_owner_id=self.request.user, pk=self.kwargs["pk"]
-        ).first() and not self.request.user.has_perm("accounts.view_account"):
-            return render(self.request, "403.html")
-        return super().get(request, *args, **kwargs)
+    actions = AccountListView.actions
 
 
 @method_decorator(
@@ -578,20 +457,6 @@ class AccountDetailViewTabs(LoginRequiredMixin, HorillaDetailTabView):
         "history": "accounts:account_history_tab_view",
     }
 
-    def get(self, request, *args, **kwargs):
-        account_id = self.object_id
-        user = request.user
-
-        is_owner = Account.objects.filter(account_owner_id=user, pk=account_id).exists()
-        has_permission = user.has_perm("accounts.view_account") or user.has_perm(
-            "accounts.view_own_account"
-        )
-
-        if not (is_owner or has_permission):
-            return render(request, "error/403.html")
-
-        return super().get(request, *args, **kwargs)
-
 
 @method_decorator(
     permission_required_or_denied(
@@ -609,18 +474,6 @@ class AccountDetailsTab(LoginRequiredMixin, HorillaDetailSectionView):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.excluded_fields.append("account_owner")
-
-    def get(self, request, *args, **kwargs):
-        pk = kwargs.get("pk")
-        user = request.user
-
-        is_owner = Account.objects.filter(account_owner_id=user, pk=pk).exists()
-        has_permission = user.has_perm("accounts.view_account")
-
-        if not (is_owner or has_permission):
-            return render(request, "error/403.html")
-
-        return super().get(request, *args, **kwargs)
 
 
 @method_decorator(
@@ -679,6 +532,38 @@ class AccountRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
         opportunity_model = self.model._meta.get_field(
             "opportunity_account"
         ).related_model
+        contact_custom_buttons = []
+        if self.request.user.has_perm("contacts.add_contact"):
+            contact_custom_buttons.append(
+                {
+                    "label": _("New Contact"),
+                    "url": reverse_lazy("contacts:related_account_contact_create_form"),
+                    "attrs": """
+                            hx-target="#modalBox"
+                            hx-swap="innerHTML"
+                            onclick="openModal()"
+                            hx-indicator="#modalBox"
+                        """,
+                    "icon": "fa-solid fa-user-plus",
+                    "class": "text-xs px-4 py-1.5 bg-primary-600 rounded-md hover:bg-primary-800 transition duration-300 text-white",
+                }
+            )
+
+        if self.request.user.has_perm("accounts.add_contactaccountrelationship"):
+            contact_custom_buttons.append(
+                {
+                    "label": _("Add Relationship"),
+                    "url": reverse_lazy("accounts:create_account_contact_relation"),
+                    "attrs": """
+                            hx-target="#modalBox"
+                            hx-swap="innerHTML"
+                            onclick="openModal()"
+                            hx-indicator="#modalBox"
+                        """,
+                    "icon": "fa-solid fa-users",
+                    "class": "text-xs px-4 py-1.5 bg-white border border-primary-600 text-primary-600 rounded-md hover:bg-primary-50 transition duration-300",
+                }
+            )
 
         return {
             "custom_related_lists": {
@@ -686,7 +571,7 @@ class AccountRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                     "app_label": "contacts",
                     "model_name": "Contact",
                     "intermediate_model": "ContactAccountRelationship",
-                    "intermediate_field": "account_relationships",
+                    "intermediate_field": "contact",
                     "related_field": "account",
                     "config": {
                         "title": _("Related Contacts"),
@@ -710,78 +595,57 @@ class AccountRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                 "account_relationships__role",
                             ),
                         ],
-                        "custom_buttons": [
-                            {
-                                "label": _("New Contact"),
-                                "url": reverse_lazy(
-                                    "contacts:related_account_contact_create_form"
-                                ),
-                                "attrs": """
-                                            hx-target="#modalBox"
-                                            hx-swap="innerHTML"
-                                            onclick="openModal()"
-                                            hx-indicator="#modalBox"
-                                        """,
-                                "icon": "fa-solid fa-user-plus",
-                                "class": "text-xs px-4 py-1.5 bg-primary-600 rounded-md hover:bg-primary-800 transition duration-300 text-white",
-                            },
-                            {
-                                "label": _("Add Relationship"),
-                                "url": reverse_lazy(
-                                    "accounts:create_account_contact_relation"
-                                ),
-                                "attrs": """
-                                            hx-target="#modalBox"
-                                            hx-swap="innerHTML"
-                                            onclick="openModal()"
-                                            hx-indicator="#modalBox"
-                                        """,
-                                "icon": "fa-solid fa-users",
-                                "class": "text-xs px-4 py-1.5 bg-white border border-primary-600 text-primary-600 rounded-md hover:bg-primary-50 transition duration-300",
-                            },
-                        ],
+                        "custom_buttons": contact_custom_buttons,
                         "col_attrs": [
-                            (
-                                {
-                                    "title": {
-                                        "style": "cursor:pointer",
-                                        "class": "hover:text-primary-600",
-                                        "hx-get": f"{{get_detail_url}}?referrer_app={self.model._meta.app_label}&referrer_model={self.model._meta.model_name}&referrer_id={pk}&referrer_url={referrer_url}&{query_string}",
-                                        "hx-target": "#mainContent",
-                                        "hx-swap": "outerHTML",
-                                        "hx-push-url": "true",
-                                        "hx-select": "#mainContent",
-                                    }
+                            {
+                                "title": {
+                                    "permission": "contacts.view_contact",
+                                    "own_permission": "contacts.view_own_contact",
+                                    "owner_field": "contact_owner",
+                                    "hx-get": f"{{get_detail_url}}?referrer_app={self.model._meta.app_label}&referrer_model={self.model._meta.model_name}&referrer_id={pk}&referrer_url={referrer_url}&{query_string}",
+                                    "hx-target": "#mainContent",
+                                    "hx-swap": "outerHTML",
+                                    "hx-push-url": "true",
+                                    "hx-select": "#mainContent",
                                 }
-                                if self.request.user.has_perm("contacts.view_contact")
-                                else {}
-                            )
+                            }
                         ],
                         "actions": [
-                            {
-                                "action": _("Edit"),
-                                "src": "assets/icons/edit.svg",
-                                "img_class": "w-4 h-4",
-                                "attrs": """
-                            hx-get="{get_edit_account_contact_relation_url}?new=true"
-                            hx-target="#modalBox"
-                            hx-swap="innerHTML"
-                            onclick="openModal()"
-                            """,
-                            },
-                            {
-                                "action": "Delete",
-                                "src": "assets/icons/a4.svg",
-                                "img_class": "w-4 h-4",
-                                "attrs": """
-                                hx-post="{get_delete_related_contact_url}"
-                                hx-target="#deleteModeBox"
-                                hx-swap="innerHTML"
-                                hx-trigger="click"
-                                hx-vals='{{"check_dependencies": "true"}}'
-                                onclick="openDeleteModeModal()"
-                            """,
-                            },
+                            (
+                                {
+                                    "permission": "contacts.change_contactaccountrelationship",
+                                    "own_permission": "contacts.change_own_contactaccountrelationship",
+                                    "owner_field": "created_by",
+                                    "intermediate_model": "ContactAccountRelationship",
+                                    "intermediate_field": "contact",
+                                    "parent_field": "account",
+                                    "action": _("Edit"),
+                                    "src": "assets/icons/edit.svg",
+                                    "img_class": "w-4 h-4",
+                                    "attrs": """
+                                            hx-get="{get_edit_account_contact_relation_url}?new=true"
+                                            hx-target="#modalBox"
+                                            hx-swap="innerHTML"
+                                            onclick="openModal()"
+                                            """,
+                                }
+                            ),
+                            (
+                                {
+                                    "permission": "contacts.delete_contactaccountrelationship",
+                                    "action": "Delete",
+                                    "src": "assets/icons/a4.svg",
+                                    "img_class": "w-4 h-4",
+                                    "attrs": """
+                                                hx-post="{get_delete_related_contact_url}"
+                                                hx-target="#deleteModeBox"
+                                                hx-swap="innerHTML"
+                                                hx-trigger="click"
+                                                hx-vals='{{"check_dependencies": "true"}}'
+                                                onclick="openDeleteModeModal()"
+                                            """,
+                                }
+                            ),
                         ],
                     },
                 },
@@ -793,7 +657,9 @@ class AccountRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                     "related_field": "account",
                     "config": {
                         "title": _("Partner"),
-                        "can_add": True,
+                        "can_add": self.request.user.has_perm(
+                            "accounts.add_partneraccountrelationship"
+                        ),
                         "add_url": reverse_lazy("accounts:account_partner_create_form"),
                         "columns": [
                             (
@@ -823,43 +689,59 @@ class AccountRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                     "hx-swap": "outerHTML",
                                     "hx-push-url": "true",
                                     "hx-select": "#mainContent",
-                                    "style": "cursor:pointer",
-                                    "class": "hover:text-primary-600",
+                                    "permission": "accounts.view_account",
+                                    "own_permission": "accounts.view_own_account",
+                                    "owner_field": "account_owner",
                                 }
                             }
                         ],
                         "actions": [
-                            {
-                                "action": _("Edit"),
-                                "src": "assets/icons/edit.svg",
-                                "img_class": "w-4 h-4",
-                                "attrs": """
-                                        hx-get="{get_account_partner_url}?new=true"
-                                        hx-target="#modalBox"
-                                        hx-swap="innerHTML"
-                                        onclick="openModal()"
-                                        """,
-                            },
-                            {
-                                "action": "Delete",
-                                "src": "assets/icons/a4.svg",
-                                "img_class": "w-4 h-4",
-                                "attrs": """
-                                        hx-post="{get_account_partner_delete_url}"
-                                        hx-target="#deleteModeBox"
-                                        hx-swap="innerHTML"
-                                        hx-trigger="click"
-                                        hx-vals='{{"check_dependencies": "true"}}'
-                                        onclick="openDeleteModeModal()"
-                                        """,
-                            },
+                            (
+                                {
+                                    "action": _("Edit"),
+                                    "src": "assets/icons/edit.svg",
+                                    "img_class": "w-4 h-4",
+                                    "permission": "accounts.change_partneraccountrelationship",
+                                    "own_permission": "accounts.change_own_partneraccountrelationship",
+                                    "owner_field": "created_by",
+                                    "intermediate_model": "PartnerAccountRelationship",
+                                    "intermediate_field": "partner",
+                                    "parent_field": "account",
+                                    "attrs": """
+                                            hx-get="{get_account_partner_url}?new=true"
+                                            hx-target="#modalBox"
+                                            hx-swap="innerHTML"
+                                            onclick="openModal()"
+                                            """,
+                                }
+                            ),
+                            (
+                                {
+                                    "action": "Delete",
+                                    "src": "assets/icons/a4.svg",
+                                    "img_class": "w-4 h-4",
+                                    "permission": "accounts.delete_partneraccountrelationship",
+                                    "attrs": """
+                                            hx-post="{get_account_partner_delete_url}"
+                                            hx-target="#deleteModeBox"
+                                            hx-swap="innerHTML"
+                                            hx-trigger="click"
+                                            hx-vals='{{"check_dependencies": "true"}}'
+                                            onclick="openDeleteModeModal()"
+                                            """,
+                                }
+                            ),
                         ],
                     },
                 },
             },
             "child_accounts": {
                 "title": _("Child Accounts"),
-                "can_add": True,
+                "can_add": (
+                    is_owner(Account, pk)
+                    and self.request.user.has_perm("accounts.change_account")
+                )
+                or self.request.user.has_perm("accounts.chang_own_account"),
                 "add_url": reverse_lazy("accounts:create_child_accounts"),
                 "columns": [
                     (Account._meta.get_field("name").verbose_name, "name"),
@@ -880,8 +762,9 @@ class AccountRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                             "hx-swap": "outerHTML",
                             "hx-push-url": "true",
                             "hx-select": "#mainContent",
-                            "style": "cursor:pointer",
-                            "class": "hover:text-primary-600",
+                            "permission": "accounts.view_account",
+                            "own_permission": "accounts.view_own_account",
+                            "owner_field": "account_owner",
                         }
                     }
                 ],
@@ -891,6 +774,7 @@ class AccountRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                             "action": "delete",
                             "src": "/assets/icons/a4.svg",
                             "img_class": "w-4 h-4",
+                            "permission": "accounts.delete_account",
                             "attrs": """
                                     hx-delete="{get_child_account_url}"
                                     hx-on:click="hxConfirm(this,'Are you sure you want to remove this child account relationship?')"
@@ -899,14 +783,12 @@ class AccountRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                                     hx-trigger="confirmed"
                                     """,
                         }
-                        if self.request.user.has_perm("account.delete_account")
-                        else {}
                     ),
                 ],
             },
             "opportunity_account": {
                 "title": _("Opportunities"),
-                "can_add": True,
+                "can_add": self.request.user.has_perm("opportunities.add_opportunity"),
                 "add_url": reverse_lazy("opportunities:opportunity_create"),
                 "columns": [
                     (
@@ -940,30 +822,38 @@ class AccountRelatedListsTab(LoginRequiredMixin, HorillaRelatedListSectionView):
                     }
                 ],
                 "actions": [
-                    {
-                        "action": _("Edit"),
-                        "src": "assets/icons/edit.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                            hx-get="{get_edit_url}?new=true"
-                            hx-target="#modalBox"
-                            hx-swap="innerHTML"
-                            onclick="openModal()"
-                            """,
-                    },
-                    {
-                        "action": "Delete",
-                        "src": "assets/icons/a4.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                                hx-post="{get_delete_url}"
-                                hx-target="#deleteModeBox"
+                    (
+                        {
+                            "action": _("Edit"),
+                            "src": "assets/icons/edit.svg",
+                            "img_class": "w-4 h-4",
+                            "permission": "opportunities.change_opportunity",
+                            "own_permission": "opportunities.change_own_opportunity",
+                            "owner_field": "owner",
+                            "attrs": """
+                                hx-get="{get_edit_url}?new=true"
+                                hx-target="#modalBox"
                                 hx-swap="innerHTML"
-                                hx-trigger="click"
-                                hx-vals='{{"check_dependencies": "true"}}'
-                                onclick="openDeleteModeModal()"
-                            """,
-                    },
+                                onclick="openModal()"
+                                """,
+                        }
+                    ),
+                    (
+                        {
+                            "action": "Delete",
+                            "src": "assets/icons/a4.svg",
+                            "img_class": "w-4 h-4",
+                            "permission": "opportunities.delete_opportunity",
+                            "attrs": """
+                                    hx-post="{get_delete_url}"
+                                    hx-target="#deleteModeBox"
+                                    hx-swap="innerHTML"
+                                    hx-trigger="click"
+                                    hx-vals='{{"check_dependencies": "true"}}'
+                                    onclick="openDeleteModeModal()"
+                                """,
+                        }
+                    ),
                 ],
             },
         }
