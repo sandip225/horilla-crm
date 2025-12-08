@@ -1973,7 +1973,7 @@ class ChartPreviewView(View):
             html = """
             <div class="bg-white rounded-lg border border-primary-300 p-4 shadow-sm" style="width: 30vh;">
                 <div class="flex flex-col space-y-2">
-                    <h3 class="text-sm font-medium text-gray-500">Total Opportunities</h3>
+                    <h3 class="text-sm font-medium text-gray-500">Total</h3>
                     <div class="flex items-baseline space-x-2">
                         <span class="text-2xl font-bold text-gray-900">$574.34</span>
                         <span class="text-sm font-medium text-green-600 bg-green-50 px-2 py-1 rounded">
@@ -1991,36 +1991,31 @@ class ChartPreviewView(View):
                 <table class="min-w-full bg-white border border-dark-50">
                     <thead>
                         <tr class="border border-dark-50">
-                            <th class="py-2 px-4 border border-dark-50">Lead Title</th>
-                            <th class="py-2 px-4 border border-dark-50">Lead Status</th>
-                            <th class="py-2 px-4 border border-dark-50">Lead Owner</th>
+                            <th class="py-2 px-4 border border-dark-50">Company Name</th>
+                            <th class="py-2 px-4 border border-dark-50">Email</th>
+                            <th class="py-2 px-4 border border-dark-50">Contact Number</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td class="py-2 px-4 border border-dark-50">Lead 1</td>
-                            <td class="py-2 px-4 border border-dark-50">Contacted</td>
-                            <td class="py-2 px-4 border border-dark-50">Adam Luis</td>
+                            <td class="py-2 px-4 border border-dark-50">Company A</td>
+                            <td class="py-2 px-4 border border-dark-50">companya@example.com</td>
+                            <td class="py-2 px-4 border border-dark-50">9876543210</td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border border-dark-50">Lead 2</td>
-                            <td class="py-2 px-4 border border-dark-50">Open</td>
-                            <td class="py-2 px-4 border border-dark-50">Ella Jackson</td>
+                            <td class="py-2 px-4 border border-dark-50">Company B</td>
+                            <td class="py-2 px-4 border border-dark-50">companyb@example.com</td>
+                            <td class="py-2 px-4 border border-dark-50">9876543211</td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border border-dark-50">Lead 3</td>
-                            <td class="py-2 px-4 border border-dark-50">Contacted</td>
-                            <td class="py-2 px-4 border border-dark-50">Amelia</td>
+                            <td class="py-2 px-4 border border-dark-50">Company C</td>
+                            <td class="py-2 px-4 border border-dark-50">companyc@example.com</td>
+                            <td class="py-2 px-4 border border-dark-50">9876543212</td>
                         </tr>
                         <tr>
-                            <td class="py-2 px-4 border border-dark-50">Lead 4</td>
-                            <td class="py-2 px-4 border border-dark-50">Open</td>
-                            <td class="py-2 px-4 border border-dark-50">Jacon</td>
-                        </tr>
-                        <tr>
-                            <td class="py-2 px-4 border border-dark-50">Lead 5</td>
-                            <td class="py-2 px-4 border border-dark-50">Not Contacted</td>
-                            <td class="py-2 px-4 border border-dark-50">Ella Jackson</td>
+                            <td class="py-2 px-4 border border-dark-50">Company D</td>
+                            <td class="py-2 px-4 border border-dark-50">companyd@example.com</td>
+                            <td class="py-2 px-4 border border-dark-50">9876543213</td>
                         </tr>
                     </tbody>
                 </table>
@@ -2079,11 +2074,11 @@ class ChartPreviewView(View):
                 },
                 "funnel": {
                     "labels": [
-                        "Leads",
-                        "Qualified",
-                        "Proposal",
-                        "Negotiation",
-                        "Closed",
+                        "Stage 1",
+                        "Satge 2",
+                        "Stage 3",
+                        "Stage 4",
+                        "Stage 5",
                     ],
                     "data": [100, 75, 50, 30, 20],
                     "labelField": "Sample Data",
