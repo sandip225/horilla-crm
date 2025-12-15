@@ -1,11 +1,9 @@
 """
-Serializers for horilla_crm.timeline models
+Serializers for Horilla Calendar models
 """
-
 from rest_framework import serializers
-
+from horilla_calendar.models import UserCalendarPreference, UserAvailability
 from horilla_core.api.serializers import HorillaUserSerializer
-from horilla_crm.timeline.models import UserAvailability, UserCalendarPreference
 
 
 class UserCalendarPreferenceSerializer(serializers.ModelSerializer):

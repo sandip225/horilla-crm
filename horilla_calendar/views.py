@@ -1,27 +1,24 @@
-"""Views for the timeline app in Horilla CRM."""
+"""Views for the calendar app in Horilla """
 
-import datetime
 import json
-
-from django.contrib import messages
+import datetime
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.utils import timezone
-from django.utils.decorators import method_decorator
-from django.utils.functional import cached_property  # type: ignore
-from django.utils.translation import gettext as _
-from django.views import View
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
-
+from django.views import View
+from django.utils.functional import cached_property  # type: ignore
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.contrib import messages
+from django.utils.translation import gettext as _
+from django.utils import timezone
 from horilla_core.decorators import htmx_required, permission_required_or_denied
 from horilla_core.utils import get_user_field_permission
-from horilla_crm.activity.models import Activity
-from horilla_generics.views import HorillaSingleDeleteView, HorillaSingleFormView
+from horilla_generics.views import HorillaSingleFormView, HorillaSingleDeleteView
+from horilla_activity.models import Activity
 from horilla_utils.middlewares import _thread_local
-
 from .models import UserAvailability, UserCalendarPreference
 
 
@@ -62,9 +59,7 @@ class CalendarView(LoginRequiredMixin, TemplateView):
                 pref = preferences.filter(calendar_type=calendar["id"]).first()
                 calendar["selected"] = pref.is_selected if pref else True
 
-        status_field_permission = get_user_field_permission(
-            self.request.user, Activity, "status"
-        )
+        status_field_permission = get_user_field_permission(self.request.user, Activity, 'status')
         context["status_field_permission"] = status_field_permission
 
         return context
@@ -288,27 +283,19 @@ class MarkCompletedView(LoginRequiredMixin, View):
 
             activity = Activity.objects.get(pk=event_id)
 
-            if not request.user.has_perm("activity.change_own_activity"):
+            if not request.user.has_perm('activity.change_own_activity'):
                 return JsonResponse(
-                    {
-                        "status": "error",
-                        "message": "Permission denied: You don't have permission to change activities",
-                    },
-                    status=403,
+                    {"status": "error", "message": "Permission denied: You don't have permission to change activities"},
+                    status=403
                 )
-
-            status_permission = get_user_field_permission(
-                request.user, Activity, "status"
-            )
-            if status_permission != "readwrite":
+            
+            status_permission = get_user_field_permission(request.user, Activity, 'status')
+            if status_permission != 'readwrite':
                 return JsonResponse(
-                    {
-                        "status": "error",
-                        "message": "Permission denied: You don't have permission to change status",
-                    },
-                    status=403,
+                    {"status": "error", "message": "Permission denied: You don't have permission to change status"},
+                    status=403
                 )
-
+            
             if new_status not in dict(Activity.STATUS_CHOICES):
                 return JsonResponse(
                     {"status": "error", "message": "Invalid status"}, status=400
@@ -348,9 +335,9 @@ class UserAvailabilityFormView(LoginRequiredMixin, HorillaSingleFormView):
         pk = self.kwargs.get("pk") or self.request.GET.get("id")
         if pk:
             return reverse_lazy(
-                "timeline:update_mark_unavailability", kwargs={"pk": pk}
+                "horilla_calendar:update_mark_unavailability", kwargs={"pk": pk}
             )
-        return reverse_lazy("timeline:mark_unavailability")
+        return reverse_lazy("horilla_calendar:mark_unavailability")
 
     def get_initial(self):
         initial = super().get_initial()
@@ -406,9 +393,7 @@ class UserAvailabilityFormView(LoginRequiredMixin, HorillaSingleFormView):
 
 
 @method_decorator(htmx_required, name="dispatch")
-@method_decorator(
-    permission_required_or_denied("timeline.delete_userunavailability"), name="dispatch"
-)
+@method_decorator(permission_required_or_denied("horilla_calendar.delete_userunavailability"), name="dispatch")
 class UserAvailabilityDeleteView(LoginRequiredMixin, HorillaSingleDeleteView):
     """View to handle deletion of user unavailability records."""
 

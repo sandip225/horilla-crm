@@ -4,15 +4,15 @@
 <div class="flex modelcontent">
     {% include "components/sub_sidebar.html" %}
 
-    <button id="markUnavailableBtn" style="display: none;"
-        hx-get="{% url 'timeline:mark_unavailability' %}"
+    <button id="markUnavailableBtn" style="display: none;" 
+        hx-get="{% url 'horilla_calendar:mark_unavailability' %}" 
         hx-vals="{}"
-        hx-target="#modalBox"
+        hx-target="#modalBox" 
         hx-swap="innerHTML">
         {% trans "Mark Unavailable" %}
     </button>
     <div id="mainContent" class="flex-[1_0] leftspace transition-all duration-300 ease-in-out pt-0">
-        <button id="reloadMainContent" style="display: none;" hx-get="{% url 'timeline:calendar_view' %}{% if request.GET.display_only %}?display_only={{ request.GET.display_only }}{% endif %}" hx-target="#mainContent" hx-select="#mainContent"  hx-swap="outerHTML">
+        <button id="reloadMainContent" style="display: none;" hx-get="{% url 'horilla_calendar:calendar_view' %}{% if request.GET.display_only %}?display_only={{ request.GET.display_only }}{% endif %}" hx-target="#mainContent" hx-select="#mainContent"  hx-swap="outerHTML">
             Reload Content
         </button>
         <div id="messages-container" style="display: none;">
@@ -83,12 +83,12 @@
             window.hasActivityChangeOwnPerm = {% if perms.activity.change_own_activity %}true{% else %}false{% endif %};
             window.hasActivityDeletePerm = {% if perms.activity.delete_activity %}true{% else %}false{% endif %};
             window.hasActivityViewOwnPerm = {% if perms.activity.view_own_activity %}true{% else %}false{% endif %};
-
+            
             window.statusFieldPermission = "{{ status_field_permission }}";
-
-            window.hasUnavailabilityCreatePerm = {% if perms.timeline.add_useravailability %}true{% else %}false{% endif %};
-            window.hasUnavailabilityChangeOwnPerm = {% if perms.timeline.change_own_useravailability %}true{% else %}false{% endif %};
-            window.hasUnavailabilityDeletePerm = {% if perms.timeline.delete_userunavalability%}true{%else%}false{%endif%};
+            
+            window.hasUnavailabilityCreatePerm = {% if perms.horilla_calendar.add_useravailability %}true{% else %}false{% endif %};
+            window.hasUnavailabilityChangeOwnPerm = {% if perms.horilla_calendar.change_own_useravailability %}true{% else %}false{% endif %};
+            window.hasUnavailabilityDeletePerm = {% if perms.horilla_calendar.delete_userunavalability%}true{%else%}false{%endif%};
 
 
             function getCalendarUrl(baseUrl) {
@@ -97,9 +97,9 @@
                 }
                 return baseUrl;
             }
-
+        
             function updateEventStatus(eventId, newStatus) {
-                fetch('{% url "timeline:mark_completed" %}', {
+                fetch('{% url "horilla_calendar:mark_completed" %}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -129,7 +129,7 @@
                     alert('Failed to update status: ' + error.message);
                 });
             }
-
+        
             // HTMX helper functions for calendar events
             function editEvent(eventId, editUrl) {
                 htmx.ajax('GET', editUrl, {
@@ -145,13 +145,13 @@
                     alert('Failed to load edit form');
                 });
             }
-
+        
             function deleteEvent(eventId, deleteUrl) {
                 if (!deleteUrl || deleteUrl === 'None' || deleteUrl === '#') {
                     alert('Delete action is not available for this event.');
                     return;
                 }
-
+        
                 // Use HTMX for delete operations to match the expected flow
                 htmx.ajax('POST', deleteUrl, {
                     headers: {
@@ -172,13 +172,13 @@
                     alert('Failed to delete event');
                 });
             }
-
+        
             function showEventInfo(eventId, detailUrl) {
                 if (!detailUrl || detailUrl === 'None' || detailUrl === '#') {
                     alert('Detail view is not available for this event.');
                     return;
                 }
-
+        
                 htmx.ajax('GET', detailUrl, {
                     target: '#mainContent',
                     swap: 'outerHTML',
@@ -194,9 +194,9 @@
                     alert('Failed to load event details');
                 });
             }
-
+        
             function createNewActivity(date) {
-                htmx.ajax('GET', '{% url "activity:activity_create_form" %}?date=' + date + '&view=calendar', {
+                htmx.ajax('GET', '{% url "horilla_activity:activity_create_form" %}?date=' + date + '&view=calendar', {
                     target: '#modalBox',
                     swap: 'innerHTML'
                 }).then(() => {
@@ -209,18 +209,18 @@
                     alert('Failed to load new activity form');
                 });
             }
-
+        
             function markDateUnavailable(clickedDate) {
                 const hiddenBtn = document.getElementById('markUnavailableBtn');
                 const data = {
                     start_date_time: clickedDate,
-
+        
                 };
                 hiddenBtn.setAttribute('hx-vals', JSON.stringify(data));
                 hiddenBtn.click();
                 $("#calendarPopup").addClass("hidden");
             }
-
+        
             document.addEventListener('htmx:afterRequest', function(event) {
                 if (event.detail.elt.id === 'markUnavailableBtn' && event.detail.xhr.status === 200) {
                     if (typeof openModal === 'function') {
@@ -228,16 +228,16 @@
                     }
                 }
             });
-
-
-
+        
+            
+        
             function initCalendar() {
-
+                
                 if (window.calendarInitialized) {
                     return;
                 }
                 window.calendarInitialized = true;
-
+        
                 const calendarEl = $("#calendar")[0];
                 if (!calendarEl) {
                     return;
@@ -245,10 +245,10 @@
                 const titleEl = $("#calendarTitle")[0];
                 const popup = $("#calendarPopup")[0];
                 const popupContent = $("#popupContent")[0];
-
+        
                 const today = new Date();
                 const currentDate = today.toISOString().split('T')[0];
-
+        
                 const calendar = new FullCalendar.Calendar(calendarEl, {
                     height: "100%",
                     expandRows: true,
@@ -265,8 +265,8 @@
                     selectable: true,
                     nowIndicator: true,
                     dayMaxEvents: true,
-
-
+        
+                    
                     views: {
                         timeGridDay: {
                             dayHeaderFormat: {
@@ -286,23 +286,23 @@
                             buttonText: "Year",
                         },
                     },
-
+                    
                     slotLabelFormat: {
                         hour: 'numeric',
                         minute: '2-digit',
                         omitZeroMinute: false,
                         meridiem: 'short'
                     },
-
+                
                     events: function(fetchInfo, successCallback, failureCallback) {
                         const selectedTypes = Array.from(document.querySelectorAll('.calendar-checkbox:checked'))
                             .map(checkbox => checkbox.dataset.calendarType);
-
-                        let url = '{% url "timeline:get_calendar_events" %}?calendar_types[]=' + selectedTypes.join('&calendar_types[]=');
+        
+                        let url = '{% url "horilla_calendar:get_calendar_events" %}?calendar_types[]=' + selectedTypes.join('&calendar_types[]=');
                         if (window.currentDisplayOnly) {
                             url += '&display_only=' + encodeURIComponent(window.currentDisplayOnly);
                         }
-
+        
                         fetch(url, {
                             headers: { 'X-CSRFToken': '{{ csrf_token }}',
                                     'X-Requested-With': 'XMLHttpRequest' },
@@ -332,10 +332,10 @@
                         const event = info.event;
                         const rect = info.el.getBoundingClientRect();
                         const containerRect = calendarEl.getBoundingClientRect();
-
+        
                         let content;
                         let icons;
-
+        
                         if (event.extendedProps.calendarType === 'unavailability') {
                             // Content for unavailability events
                             content = `
@@ -373,7 +373,7 @@
                             const status = event.extendedProps.status;
                             const assignedToList = event.extendedProps.assignedTo || [];
                             const clientName = assignedToList.map(user => user.first_name).join(", ") || "No assigned user";
-
+        
                             content = `
                                 <div class="flex flex-col gap-2">
                                     <h5>${event.title}</h5>
@@ -422,9 +422,9 @@
                                 </div>
                             `;
                         }
-
+        
                         content += icons;
-
+        
                         showPopup(
                             content,
                             rect.left - containerRect.left,
@@ -436,9 +436,9 @@
                             const rect = info.dayEl.getBoundingClientRect();
                             const containerRect = calendarEl.getBoundingClientRect();
                             const clickedDate = info.dateStr;
-
+            
                             let content = '<div class="flex flex-col gap-2">';
-
+                            
                             if (window.hasActivityCreatePerm) {
                                 content += `
                                     <button
@@ -449,7 +449,7 @@
                                     </button>
                                 `;
                             }
-
+                            
                             if (window.hasUnavailabilityCreatePerm) {
                                 content += `
                                     <button
@@ -460,9 +460,9 @@
                                     </button>
                                 `;
                             }
-
+                            
                             content += '</div>';
-
+            
                             showPopup(
                                 content,
                                 rect.left - containerRect.left,
@@ -480,18 +480,18 @@
                         }
                     },
                 });
-
+        
                 calendar.render();
                 syncMasterCheckbox();
-
+        
                 // Toolbar buttons
                 $("#prevBtn").on("click", () => calendar.prev());
                 $("#nextBtn").on("click", () => calendar.next());
                 $("#todayBtn").on("click", () => calendar.today());
-
+        
                 // Tab buttons
                 const tabButtons = $(".tab-btn");
-
+        
                 function setActiveTab(activeId) {
                     tabButtons.each(function() {
                         const $btn = $(this);
@@ -504,61 +504,61 @@
                         }
                     });
                 }
-
+        
                 $("#dayView").on("click", () => {
                     calendar.changeView("timeGridDay");
                     window.currentView = "timeGridDay";
                     localStorage.setItem('calendarView', window.currentView);
                     setActiveTab("dayView");
                 });
-
+        
                 $("#weekView").on("click", () => {
                     calendar.changeView("timeGridWeek");
                     window.currentView = "timeGridWeek";
                     localStorage.setItem('calendarView', window.currentView);
                     setActiveTab("weekView");
                 });
-
+        
                 $("#monthView").on("click", () => {
                     calendar.changeView("dayGridMonth");
                     window.currentView = "dayGridMonth";
                     localStorage.setItem('calendarView', window.currentView);
                     setActiveTab("monthView");
                 });
-
+        
                 $("#yearView").on("click", () => {
                     calendar.changeView("multiMonthYear");
                     window.currentView = "multiMonthYear";
                     localStorage.setItem('calendarView', window.currentView);
                     setActiveTab("yearView");
                 });
-
+        
                 setActiveTab(
                     window.currentView === "timeGridDay" ? "dayView" :
                     window.currentView === "timeGridWeek" ? "weekView" :
                     window.currentView === "multiMonthYear" ? "yearView" : "monthView"
                 );
-
-
+        
+        
                 // Color picker functionality
                 $('.calendar-color-picker').on('change', function () {
                     const calendarType = $(this).data('calendar-type');
                     const color = this.value;
                     const checkbox = $(`.calendar-checkbox[data-calendar-type="${calendarType}"]`)[0];
-
+        
                     // Update checkbox styles
                     checkbox.style.borderColor = color;
                     if (checkbox.checked) {
                         checkbox.style.backgroundColor = color;
                     }
-
+        
                     // Get currently selected calendar types
                     const selectedTypes = Array.from(document.querySelectorAll('.calendar-checkbox:checked'))
                         .map(checkbox => checkbox.dataset.calendarType);
-
+        
                     // Save color preference to backend
                     $.ajax({
-                        url: '{% url "timeline:save_calendar_preferences" %}',
+                        url: '{% url "horilla_calendar:save_calendar_preferences" %}',
                         method: 'POST',
                         headers: {
                             'X-CSRFToken': '{{ csrf_token }}',
@@ -583,7 +583,7 @@
                         }
                     });
                 });
-
+        
                 // Update checkbox background and refresh events when checked/unchecked
                 $('.calendar-checkbox').on('change', function () {
                     if (this.checked) {
@@ -592,11 +592,11 @@
                         this.style.backgroundColor = 'transparent';
                     }
                     syncMasterCheckbox();
-
+        
                     const selectedTypes = Array.from(document.querySelectorAll('.calendar-checkbox:checked'))
                         .map(checkbox => checkbox.dataset.calendarType);
-
-                    fetch('{% url "timeline:save_calendar_preferences" %}', {
+        
+                    fetch('{% url "horilla_calendar:save_calendar_preferences" %}', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -607,7 +607,7 @@
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-                            const url = '{% url "timeline:get_calendar_events" %}?' + selectedTypes.map(type => `calendar_types[]=${encodeURIComponent(type)}`).join('&');
+                            const url = '{% url "horilla_calendar:get_calendar_events" %}?' + selectedTypes.map(type => `calendar_types[]=${encodeURIComponent(type)}`).join('&');
                             fetch(url, {
                                 headers: { 'X-CSRFToken': '{{ csrf_token }}',
                                          'X-Requested-With': 'XMLHttpRequest' },
@@ -629,12 +629,12 @@
                     })
                     .catch(error => console.error('Fetch error:', error));
                 });
-
+        
                 // Master checkbox logic for "My Calendars"
                 $('#masterCheckbox').on('change', function() {
                     const isChecked = this.checked;
                     const allCheckboxes = $('.calendar-checkbox');
-
+        
                     allCheckboxes.each(function() {
                         this.checked = isChecked;
                         if (isChecked) {
@@ -643,14 +643,14 @@
                             this.style.backgroundColor = 'transparent';
                         }
                     });
-
+        
                     const selectedTypes = isChecked ?
                         allCheckboxes.map(function() { return this.dataset.calendarType; }).get() :
                         [];
-
+        
                     // Always send the request, even with empty array
                     $.ajax({
-                        url: '{% url "timeline:save_calendar_preferences" %}',
+                        url: '{% url "horilla_calendar:save_calendar_preferences" %}',
                         method: 'POST',
                         headers: {
                             'X-CSRFToken': '{{ csrf_token }}',
@@ -662,16 +662,16 @@
                         success: function(data) {
                             if (data.status === 'success') {
                                 calendar.getEventSources().forEach(source => source.remove());
-
+        
                                 if (selectedTypes.length > 0) {
-                                    const url = '{% url "timeline:get_calendar_events" %}?' +
+                                    const url = '{% url "horilla_calendar:get_calendar_events" %}?' +
                                         selectedTypes.map(type => `calendar_types[]=${encodeURIComponent(type)}`).join('&');
-
+        
                                     $.ajax({
                                         url: url,
                                         headers: { 'X-CSRFToken': '{{ csrf_token }}',
                                                   'X-Requested-With': 'XMLHttpRequest' },
-
+        
                                         success: function(data) {
                                             if (data.status === 'success') {
                                                 calendar.addEventSource(data.events);
@@ -694,7 +694,7 @@
                         }
                     });
                 });
-
+        
                 function syncMasterCheckbox() {
                     const masterCheckbox = $('#masterCheckbox')[0];
                     if (!masterCheckbox) {
@@ -703,7 +703,7 @@
                     const calendarCheckboxes = $('.calendar-checkbox');
                     const checkedCount = calendarCheckboxes.filter(':checked').length;
                     const totalCount = calendarCheckboxes.length;
-
+        
                     if (checkedCount === 0) {
                         masterCheckbox.checked = false;
                         masterCheckbox.indeterminate = false;
@@ -715,7 +715,7 @@
                         masterCheckbox.indeterminate = true;
                     }
                 }
-
+        
                 // Sync checkbox state with "Display This Only" after HTMX settle
                 $(document).on('htmx:afterSettle', function() {
                     const displayOnly = '{{ request.GET.display_only|default:"" }}';
@@ -733,7 +733,7 @@
                     }
                     syncMasterCheckbox();
                 });
-
+        
                 // Popup functions
                 function showPopup(content, x, y) {
                     popupContent.innerHTML = content;
@@ -741,31 +741,31 @@
                     popup.style.top = `${y}px`;
                     $(popup).removeClass("hidden");
                 }
-
+        
                 $("#closePopupBtn").on("click", () => {
                     $(popup).addClass("hidden");
                 });
-
+        
                 $(document).on("click", function (e) {
                     if (!$(popup).has(e.target).length && !$(e.target).closest(".fc-event").length) {
                         $(popup).addClass("hidden");
                     }
                 });
-
+        
                 window.showPopup = showPopup;
             }
-
-
+        
+            
             $(document).on("htmx:beforeRequest", function(event) {
                 if (event.detail.target.id === "mainContent") {
                     window.calendarInitialized = false;
                 }
             });
-
+        
             $(document).on("htmx:afterSettle", function(event) {
                 const urlParams = new URLSearchParams(window.location.search);
                 window.currentDisplayOnly = urlParams.get('display_only') || '';
-
+        
                 if (!window.calendarInitialized) {
                     initCalendar();
                 }
@@ -774,7 +774,7 @@
                     $(activeLinkId).addClass("bg-primary-600 text-white").find("img").css("filter", "brightness(0) invert(1)");
                 }
             });
-        </script>
+        </script> 
     </div>
 
     <div class="p-5 pt-24">
@@ -799,10 +799,10 @@
                 <div class="h-full shadow-[0px_0px_20px_0px_rgba(0,0,0,0.05)] bg-white rounded-lg z-0 p-4">
                     <div class="flex items-center gap-1">
                         <div class="w-3">
-                            <input type="checkbox"
-                                class="w-5 h-5 border-2 rounded-sm focus:ring-0 master-checkbox"
+                            <input type="checkbox" 
+                                class="w-5 h-5 border-2 rounded-sm focus:ring-0 master-checkbox" 
                                 id="masterCheckbox">
-                        </div>
+                        </div>   
                         <span class="flex-2 p-3 text-sm">{% trans 'My Calendars' %}</span>
                     </div>
                     <div>
@@ -810,9 +810,9 @@
                             <div class="flex items-center justify-between gap-2 mb-3 relative">
                                 <div class="flex gap-2 text-sm items-center flex-1">
                                     <div class="w-5">
-                                        <input
-                                            type="checkbox"
-                                            class="w-5 h-5 border-2 rounded-sm focus:ring-0 calendar-checkbox"
+                                        <input 
+                                            type="checkbox" 
+                                            class="w-5 h-5 border-2 rounded-sm focus:ring-0 calendar-checkbox" 
                                             data-calendar-type="{{ calendar.id }}"
                                             {% if calendar.selected %}
                                                 style="border-color: {{ user_preferences|lookup:calendar.id|default:calendar.default_color }}; background-color: {{ user_preferences|lookup:calendar.id|default:calendar.default_color }};"
@@ -821,7 +821,7 @@
                                             {% endif %}
                                             {% if calendar.selected %}checked{% endif %}
                                         >
-                                    </div>
+                                    </div>                        
                                     <span class="flex-1">{% trans calendar.name %}</span>
                                 </div>
                                 <div class="relative dropdown-wrapper">
@@ -831,9 +831,9 @@
                                     <div class="dropdown-content w-48 absolute bg-white rounded-lg [box-shadow:0px_0px_20px_0px_rgb(0_0_0_/_8%)] py-2 right-5 top-full z-60">
                                         <ul class="text-sm">
                                             <li>
-                                                <button
+                                                <button 
                                                     class="px-4 py-1.5 hover:text-primary-600 transition duration-300 text-sm w-full text-left"
-                                                    hx-get="{% url 'timeline:calendar_view' %}?display_only={{ calendar.id }}"
+                                                    hx-get="{% url 'horilla_calendar:calendar_view' %}?display_only={{ calendar.id }}"
                                                     hx-target="#mainContent"
                                                     hx-select="#mainContent"
                                                     hx-swap="outerHTML"
@@ -843,9 +843,9 @@
                                             </li>
                                             <li class="px-4 py-1.5 flex items-center gap-2">
                                                 <span class="hover:text-primary-600 transition duration-300 text-sm">{% trans 'Color' %}</span>
-                                                <input
-                                                    type="color"
-                                                    class="w-20 h-6 border-none outline-none cursor-pointer calendar-color-picker"
+                                                <input 
+                                                    type="color" 
+                                                    class="w-20 h-6 border-none outline-none cursor-pointer calendar-color-picker" 
                                                     value="{{ user_preferences|lookup:calendar.id|default:calendar.default_color }}"
                                                     data-calendar-type="{{ calendar.id }}"
                                                 >
@@ -855,14 +855,14 @@
                                 </div>
                             </div>
                         {% endfor %}
-
+                        
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-</div>
+    
+</div>     
 <script>
     $(document).ready(function () {
         if (!window.calendarInitialized) {
@@ -870,5 +870,5 @@
         }
     });
 </script>
-
+  
 {% endblock content %}

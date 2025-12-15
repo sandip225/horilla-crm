@@ -1,6 +1,6 @@
 """
 This module registers Floating, Settings, My Settings, and Main Section menus
-for the Horilla CRM Timeline app
+for the Horilla Calendar app
 """
 
 from django.urls import reverse_lazy
@@ -24,14 +24,14 @@ class AnalyticsSection:
 @sub_section_menu.register
 class CalendarSubSection:
     """
-    Registers the timeline menu to sub section in the main sidebar.
+    Registers the calendar  menu to sub section in the main sidebar.
     """
 
     section = "schedule"
     verbose_name = _("Calendar")
     icon = "assets/icons/calendar.svg"
-    url = reverse_lazy("timeline:calendar_view")
-    app_label = "timeline"
+    url = reverse_lazy("horilla_calendar:calendar_view")
+    app_label = "horilla_calendar"
     position = 1
     attrs = {
         "hx-boost": "true",

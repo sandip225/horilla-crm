@@ -1,5 +1,5 @@
 """
-Documentation for horilla_crm.timeline API endpoints
+Documentation for Horilla Calendar API endpoints
 """
 
 # User Calendar Preference API documentation

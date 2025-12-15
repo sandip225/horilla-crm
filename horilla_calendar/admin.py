@@ -1,8 +1,7 @@
-"""Admin configuration for timeline app."""
+"""Admin configuration for horilla_calendar app."""
 
 from django.contrib import admin
-
-from .models import UserAvailability, UserCalendarPreference
+from .models import UserCalendarPreference, UserAvailability
 
 admin.site.register(UserCalendarPreference)
 admin.site.register(UserAvailability)

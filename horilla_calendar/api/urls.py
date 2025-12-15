@@ -1,13 +1,12 @@
 """
-URL patterns for horilla_crm.timeline API
+URL patterns for Horilla Calendar API
 """
-
-from django.urls import include, path
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
-from horilla_crm.timeline.api.views import (
-    UserAvailabilityViewSet,
+from horilla_calendar.api.views import (
     UserCalendarPreferenceViewSet,
+    UserAvailabilityViewSet,
 )
 
 router = DefaultRouter()
