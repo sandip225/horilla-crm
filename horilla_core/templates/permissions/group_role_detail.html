@@ -44,7 +44,7 @@
             </ul>
         </div>
     </div>
-    <div id="followup-contents" class="overflow-hidden overflow-y-auto h-[485px] overflow-x-auto pt-[35px]">
+    <div id="followup-contents" class="overflow-hidden overflow-y-auto h-[calc(_100vh_-_410px_)] overflow-x-auto pt-[35px]">
         <div id="tab-fu-open" class="fu-tab-content block text-[.8rem] border-[1px] border-[solid] border-[#efefef] rounded-md bg-white">
             <div class="bg-primary-300 px-4 py-3">
                 <div class="flex gap-4 items-center justify-between">
@@ -122,7 +122,7 @@
 
                             <div class="flex gap-8  flex-wrap gap-y-4 text-xs text-dark-300 w-[calc(100%-15rem)]">
                                 {% for perm in model.permissions %}
-                                    <label class="flex items-center whitespace-nowrap">
+                                    <label class="flex items-center whitespace-nowrap w-[110px]">
                                         <input
                                             type="checkbox"
                                             name="permissions"

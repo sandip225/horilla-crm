@@ -31,9 +31,9 @@ class PermissionUtils:
         "change",
         "view",
         "delete",
-        "view_own",
-        "change_own",
         "can_import",
+        "change_own",
+        "view_own",
     ]
 
     PERMISSION_MAP = {
