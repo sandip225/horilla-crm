@@ -2,8 +2,7 @@
 Signals for the horilla_keys app
 """
 
-# Define your horilla_keys signals here
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from horilla_core.models import HorillaUser

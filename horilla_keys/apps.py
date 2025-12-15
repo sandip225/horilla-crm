@@ -6,7 +6,7 @@ from django.apps import AppConfig
 from django.utils.translation import gettext_lazy as _
 
 
-class Horilla_keysConfig(AppConfig):
+class HorillaKeysConfig(AppConfig):
     """App configuration class for horilla_keys."""
 
     default_auto_field = "django.db.models.BigAutoField"
@@ -54,7 +54,9 @@ class Horilla_keysConfig(AppConfig):
         except Exception as e:
             import logging
 
-            logging.warning(f"Horilla_keysConfig.ready failed  :  ", e)
-            pass
+            logging.warning(
+                "HorillaKeysConfig.ready failed during app initialization: %s",
+                e,
+            )
 
         super().ready()
