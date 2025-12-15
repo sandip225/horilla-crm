@@ -217,7 +217,7 @@ class Lead(HorillaCoreModel):
         ("campaign", _("Campaign")),
         ("phone", _("Phone")),
         ("email", _("Email")),
-        ("social media", _("Social Media")),
+        ("social_media", _("Social Media")),
         ("partner", _("Partner")),
         ("other", _("Other")),
     ]

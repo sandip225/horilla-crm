@@ -1,0 +1,5 @@
+__version__ = "1.0.0"
+__module_name__ = "Activity"
+__release_date__ = ""
+__description__ = "Module for tracking and managing activities such as tasks, calls, events, and emails."
+__icon__ = "assets/icons/activity-red.svg"

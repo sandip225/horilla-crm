@@ -17,6 +17,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, View
 
+from horilla_activity.views import HorillaActivitySectionView
 from horilla_core.decorators import (
     htmx_required,
     permission_required,
@@ -32,7 +33,6 @@ from horilla_crm.campaigns.forms import (
 from horilla_crm.campaigns.models import Campaign, CampaignMember
 from horilla_generics.mixins import RecentlyViewedMixin
 from horilla_generics.views import (
-    HorillaActivitySectionView,
     HorillaDetailSectionView,
     HorillaDetailTabView,
     HorillaDetailView,

@@ -15,6 +15,7 @@ from django.utils.functional import cached_property  # type: ignore
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView
 
+from horilla_activity.views import HorillaActivitySectionView
 from horilla_core.decorators import (
     htmx_required,
     permission_required,
@@ -38,7 +39,6 @@ from horilla_crm.opportunities.models import (
 )
 from horilla_generics.mixins import RecentlyViewedMixin  # type: ignore
 from horilla_generics.views import (
-    HorillaActivitySectionView,
     HorillaDetailSectionView,
     HorillaDetailTabView,
     HorillaDetailView,

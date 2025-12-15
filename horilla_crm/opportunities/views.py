@@ -9,6 +9,7 @@ from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property  # type: ignore
 from django.utils.translation import gettext_lazy as _
 
+from horilla_activity.views import HorillaActivitySectionView
 from horilla_core.decorators import (
     htmx_required,
     permission_required,
@@ -26,7 +27,6 @@ from horilla_crm.opportunities.models import (
 from horilla_crm.opportunities.signals import set_opportunity_contact_id
 from horilla_generics.mixins import RecentlyViewedMixin
 from horilla_generics.views import (
-    HorillaActivitySectionView,
     HorillaDetailSectionView,
     HorillaDetailTabView,
     HorillaDetailView,

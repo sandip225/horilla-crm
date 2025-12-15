@@ -78,6 +78,8 @@ INSTALLED_APPS = [
     "horilla_utils",
     "horilla_notifications",
     "horilla_mail",
+    "horilla_activity",
+    "horilla_calendar",
     "horilla_keys",
 ]
 
@@ -143,7 +145,6 @@ TEMPLATES = [
                 "horilla.context_processors.unread_notifications",
                 "horilla.context_processors.menu_context_processor",
                 "horilla.context_processors.currency_context",
-                "horilla.context_processors.collect_all_versions",
             ],
         },
     },

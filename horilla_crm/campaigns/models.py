@@ -250,6 +250,9 @@ class Campaign(HorillaCoreModel):
         ("event", _("Event")),
         ("social_media", _("Social Media")),
         ("other", _("Other")),
+        ("webinar", _("Webinar")),
+        ("referral", _("Referral")),
+        ("advertisement", _("Advertisement")),
     ]
 
     campaign_name = models.CharField(max_length=255, verbose_name=_("Campaign Name"))
