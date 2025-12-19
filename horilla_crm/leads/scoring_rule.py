@@ -489,7 +489,7 @@ class ScroringActiveToggleView(LoginRequiredMixin, View):
         try:
             rule = ScoringRule.objects.get(pk=kwargs["pk"])
             user = request.user
-            if user.is_superuser or user.has_perm("leads.change_scoringrule"):
+            if user.has_perm("leads.change_scoringrule"):
                 if not rule.is_active:
                     rule.is_active = True
                     messages.success(request, f"{rule.name} activated successfully")

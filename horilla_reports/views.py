@@ -88,14 +88,14 @@ class ReportNavbar(LoginRequiredMixin, HorillaNavView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         title = self.request.GET.get("title")
-        context["nav_title"] = title
+        context["nav_title"] = _(title)
         return context
 
     @cached_property
     def new_button(self):
         if self.request.user.has_perm("horilla_reports.add_report"):
             return {
-                "title": "New Report",
+                "title": _("New Report"),
                 "url": f"""{ reverse_lazy('horilla_reports:create_report')}""",
                 "attrs": {"id": "report-create"},
             }
@@ -106,7 +106,7 @@ class ReportNavbar(LoginRequiredMixin, HorillaNavView):
         if self.request.user.has_perm("horilla_reports.view_report"):
             return [
                 {
-                    "action": "Load Default Reports",
+                    "action": _("Load Default Reports"),
                     "attrs": f"""
                             id="reports-load"
                             hx-get="{reverse_lazy('horilla_reports:load_default_reports')}"
@@ -121,7 +121,7 @@ class ReportNavbar(LoginRequiredMixin, HorillaNavView):
     def second_button(self):
         if self.request.user.has_perm("horilla_reports.add_reportfolder"):
             return {
-                "title": "New Folder",
+                "title": _("New Folder"),
                 "url": f"""{ reverse_lazy('horilla_reports:create_folder')}?pk={self.request.GET.get('pk', '')}""",
                 "attrs": {"id": "report-folder-create"},
             }
@@ -155,7 +155,7 @@ class ReportsListView(LoginRequiredMixin, HorillaListView):
             return {
                 "url": f"""{ reverse_lazy('horilla_reports:load_default_reports')}?new=true""",
                 "attrs": 'id="reports-load"',
-                "title": "Load Default Reports",
+                "title": _("Load Default Reports"),
             }
 
     columns = ["name", (_("Module"), "module_verbose_name"), "folder"]
@@ -4154,8 +4154,7 @@ class MarkFolderAsFavouriteView(LoginRequiredMixin, View):
         folder = get_object_or_404(ReportFolder, pk=pk)
         user = request.user
         if (
-            user.is_superuser
-            or user.has_perm("horilla_reports.change_report")
+            user.has_perm("horilla_reports.change_report")
             or folder.report_folder_owner == user
         ):
             folder.is_favourite = not folder.is_favourite
@@ -4177,8 +4176,7 @@ class MarkReportAsFavouriteView(LoginRequiredMixin, View):
         report = get_object_or_404(Report, pk=pk)
         user = request.user
         if (
-            user.is_superuser
-            or user.has_perm("horilla_reports.change_report")
+            user.has_perm("horilla_reports.change_report")
             or report.report_owner == user
         ):
             report.is_favourite = not report.is_favourite

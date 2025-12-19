@@ -185,7 +185,7 @@ class DashboardNavbar(LoginRequiredMixin, HorillaNavView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         title = self.request.GET.get("title", "Dashboards")
-        context["nav_title"] = title
+        context["nav_title"] = _(title)
         return context
 
     @cached_property
@@ -193,7 +193,7 @@ class DashboardNavbar(LoginRequiredMixin, HorillaNavView):
         """Button for creating new dashboard"""
         if self.request.user.has_perm("horilla_dashboard.add_dashboard"):
             return {
-                "title": "New Dashboard",
+                "title": _("New Dashboard"),
                 "url": f"""{ reverse_lazy('horilla_dashboard:dashboard_create')}""",
                 "attrs": {"id": "dashboard-create"},
             }
@@ -203,7 +203,7 @@ class DashboardNavbar(LoginRequiredMixin, HorillaNavView):
         """Button for creating dashboard folder"""
         if self.request.user.has_perm("horilla_dashboard.add_dashboardfolder"):
             return {
-                "title": "New Folder",
+                "title": _("New Folder"),
                 "url": f"{reverse_lazy('horilla_dashboard:dashboard_folder_create')}?pk={self.request.GET.get('pk', '')}",
                 "attrs": {"id": "dashboard-folder-create"},
             }
@@ -231,7 +231,7 @@ class DashboardListView(LoginRequiredMixin, HorillaListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Dashboards"
+        context["title"] = _("Dashboards")
         return context
 
     columns = ["name", "description", "folder", (_("Is Default"), "is_default_col")]
@@ -286,8 +286,7 @@ class DashboardDefaultToggleView(LoginRequiredMixin, View):
             dashboard = Dashboard.objects.get(pk=kwargs["pk"])
             user = request.user
             if (
-                user.is_superuser
-                or user.has_perm("horilla_dashboard.change_dashboard")
+                user.has_perm("horilla_dashboard.change_dashboard")
                 or dashboard.dashboard_owner == user
             ):
                 if not dashboard.is_default:
@@ -324,8 +323,7 @@ class DashboardFavoriteToggleView(LoginRequiredMixin, View):
             dashboard = Dashboard.objects.get(pk=kwargs["pk"])
             user = request.user
             if (
-                user.is_superuser
-                or user.has_perm("horilla_dashboard.change_dashboard")
+                user.has_perm("horilla_dashboard.change_dashboard")
                 or dashboard.dashboard_owner == user
             ):
                 if user in dashboard.favourited_by.all():
@@ -3128,8 +3126,7 @@ class DashboardFolderFavoriteView(LoginRequiredMixin, View):
             user = request.user
 
             if (
-                user.is_superuser
-                or user.has_perm("horilla_dashboard.change_dashboardfolder")
+                user.has_perm("horilla_dashboard.change_dashboardfolder")
                 or folder.folder_owner == user
             ):
                 if user in folder.favourited_by.all():
@@ -3536,7 +3533,7 @@ class FavouriteDashboardListView(LoginRequiredMixin, HorillaListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["title"] = "Favourite Dashboards"
+        context["title"] = _("Favourite Dashboards")
         return context
 
     def get_queryset(self):

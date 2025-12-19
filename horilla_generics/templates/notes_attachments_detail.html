@@ -5,7 +5,7 @@
     <div class="flex justify-between mb-3">
         <h2 class="text-lg font-semibold">{{ obj.title }}</h2>
         <button onclick="closeContentModal();" class="ms-4 text-gray-500 hover:text-red-500 text-xl cursor-pointer">
-            <img src="{% static 'assets/icons/close.svg' %}" alt="Close" />
+            <img src="{% static 'assets/icons/close.svg' %}" alt="{% trans 'Close' %}" />
         </button>
     </div>
 
@@ -86,9 +86,9 @@
         </div>
 
         <!-- Action Buttons -->
-        {% if request.user.is_superuser or perms.horilla_core.change_horillaattachment or perms.horilla_core.change_own_horillaattachment and obj.created_by == request.user or perms.horilla_core.delete_horillaattachment %}
+        {% if   perms.horilla_core.change_horillaattachment or perms.horilla_core.change_own_horillaattachment and obj.created_by == request.user or perms.horilla_core.delete_horillaattachment %}
         <div class="flex gap-2 justify-end p-5">
-            {% if request.user.is_superuser or perms.horilla_core.change_horillaattachment or perms.horilla_core.change_own_horillaattachment and obj.created_by == request.user %}
+            {% if  perms.horilla_core.change_horillaattachment or perms.horilla_core.change_own_horillaattachment and obj.created_by == request.user %}
             <button hx-get="{% url 'horilla_generics:notes_attachment_edit' obj.pk %}"
                 hx-target="#modalBox" hx-on:click="openModal();"
                 class="w-[100px] justify-center flex items-center gap-2 text-sm px-3 py-2 bg-primary-600 rounded-md hover:bg-primary-800 transition duration-300 text-[white]">
@@ -100,7 +100,7 @@
             </button>
             {% endif %}
 
-            {% if request.user.is_superuser or perms.horilla_core.delete_horillaattachment %}
+            {% if  perms.horilla_core.delete_horillaattachment %}
             <button
                     hx-get="{% url 'horilla_generics:notes_attachment_delete' obj.pk %}"
                     hx-target="#deleteModeBox"

@@ -303,18 +303,23 @@ class HorillaListView(ListView):
         if self.columns:
             resolved_columns = []
             instance = self.model()
-            for col in self.columns:
-                if isinstance(col, (tuple, list)) and len(col) >= 2:
-                    resolved_columns.append((str(col[0]), str(col[1])))
-                elif isinstance(col, str):
-                    try:
-                        field = instance._meta.get_field(col)
-                        verbose_name = str(field.verbose_name)
-                        resolved_columns.append((verbose_name, col))
-                    except Exception:
-                        resolved_columns.append((col.replace("_", " ").title(), col))
-                else:
-                    resolved_columns.append((str(col), str(col)))
+
+            # Force English when resolving column names
+            with translation.override("en"):
+                for col in self.columns:
+                    if isinstance(col, (tuple, list)) and len(col) >= 2:
+                        resolved_columns.append((str(col[0]), str(col[1])))
+                    elif isinstance(col, str):
+                        try:
+                            field = instance._meta.get_field(col)
+                            verbose_name = str(field.verbose_name)
+                            resolved_columns.append((verbose_name, col))
+                        except Exception:
+                            resolved_columns.append(
+                                (col.replace("_", " ").title(), col)
+                            )
+                    else:
+                        resolved_columns.append((str(col), str(col)))
 
             self.columns = resolved_columns
 
@@ -537,6 +542,7 @@ class HorillaListView(ListView):
 
         elif self.columns:
             with translation.override("en"):
+                current_lang = translation.get_language()
                 serializable_columns = []
                 for col in self.columns:
                     if isinstance(col, (list, tuple)) and len(col) >= 2:
@@ -3740,7 +3746,6 @@ class HorillaDetailTabView(HorillaTabView):
             if "notes_attachments" in self.urls and (
                 user.has_perm("horilla_core.view_horillaattachment")
                 or user.has_perm("horilla_core.view_own_horillaattachment")
-                or user.is_superuser
             ):
 
                 self.tabs.append(
@@ -4500,79 +4505,54 @@ class HorillaNotesAttachementSectionView(DetailView):
         """
         Return actions based on user permissions.
         """
-        user = self.request.user
-        actions = []
 
-        if (
-            user.is_superuser
-            or user.has_perm("horilla_core.view_own_horillaattachment")
-            or user.has_perm("horilla_core.view_horillaattachment")
-        ):
-            actions.append(
-                {
-                    "action": "View",
-                    "src": "assets/icons/eye1.svg",
-                    "img_class": "w-4 h-4",
-                    "attrs": """
+        actions = [
+            {
+                "action": "View",
+                "src": "assets/icons/eye1.svg",
+                "img_class": "w-4 h-4",
+                "permissions": [
+                    "horilla_core.view_horillaattachment",
+                    "horilla_core.view_own_horillaattachment",
+                ],
+                "attrs": """
                             hx-get="{get_detail_view_url}"
                             hx-target="#contentModalBox"
                             hx-swap="innerHTML"
                             onclick="openContentModal()"
                             """,
-                }
-            )
-
-        if self.check_change_attachment_permission():
-            actions.append(
-                {
-                    "action": "Edit",
-                    "src": "assets/icons/edit.svg",
-                    "img_class": "w-4 h-4",
-                    "attrs": """
+            },
+            {
+                "action": "Edit",
+                "src": "assets/icons/edit.svg",
+                "img_class": "w-4 h-4",
+                "permission": "horilla_core.change_horillaattachment",
+                "own_permission": "horilla_core.change_own_horillaattachment",
+                "owner_field": "created_by",
+                "attrs": """
                             hx-get="{get_edit_url}"
                             hx-target="#modalBox"
                             hx-swap="innerHTML"
                             hx-on:click="openModal();"
                             """,
-                }
-            )
-
-        # Delete action - check delete_horillaattachment permission
-        if user.is_superuser or user.has_perm("horilla_core.delete_horillaattachment"):
-            actions.append(
-                {
-                    "action": "Delete",
-                    "src": "assets/icons/a4.svg",
-                    "img_class": "w-4 h-4",
-                    "attrs": """
-            hx-post="{get_delete_url}"
-            hx-target="#deleteModeBox"
-            hx-swap="innerHTML"
-            hx-trigger="click"
-            hx-vals='{{"check_dependencies": "true"}}'
-            onclick="openDeleteModeModal()"
-        """,
-                }
-            )
+            },
+            {
+                "action": "Delete",
+                "src": "assets/icons/a4.svg",
+                "img_class": "w-4 h-4",
+                "permission": "horilla_core.delete_horillaattachment",
+                "attrs": """
+                            hx-post="{get_delete_url}"
+                            hx-target="#deleteModeBox"
+                            hx-swap="innerHTML"
+                            hx-trigger="click"
+                            hx-vals='{{"check_dependencies": "true"}}'
+                            onclick="openDeleteModeModal()"
+                            """,
+            },
+        ]
 
         return actions
-
-    def check_change_attachment_permission(self):
-        """
-        Check if user has permission to edit attachments.
-        Checks change_horillaattachment permission or change_own if user is owner.
-
-        Returns:
-            bool: True if user has permission, False otherwise
-        """
-        user = self.request.user
-        if user.has_perm("horilla_core.change_horillaattachment"):
-            return True
-
-        if user.has_perm("horilla_core.change_own_horillaattachment"):
-            return True
-
-        return False
 
     def check_attachment_add_permission(self):
         """

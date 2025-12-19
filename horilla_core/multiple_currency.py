@@ -69,42 +69,33 @@ class CurrencyListView(LoginRequiredMixin, HorillaListView):
         """
         Return list of actions for the detail view
         """
-        actions = []
-        show_actions = self.request.user.is_superuser or self.request.user.has_perm(
-            "horilla_core.change_multiplecurrency"
-        )
-
-        if show_actions:
-            actions.extend(
-                [
-                    {
-                        "action": "Edit",
-                        "src": "assets/icons/edit.svg",
-                        "img_class": "w-4 h-4 flex gap-4",
-                        "attrs": """
-                hx-get="{get_edit_url}"
-                hx-target="#modalBox"
-                hx-swap="innerHTML"
-                onclick="openModal()"
-            """,
-                    },
-                ]
-            )
-            if self.request.user.has_perm("horilla_core.delete_multiplecurrency"):
-                actions.append(
-                    {
-                        "action": "Delete",
-                        "src": "assets/icons/a4.svg",
-                        "img_class": "w-4 h-4",
-                        "attrs": """
-                hx-post="{get_delete_url}"
-                hx-target="#modalBox"
-                hx-swap="innerHTML"
-                hx-trigger="click"
-                onclick="openModal()"
-            """,
-                    }
-                )
+        actions = [
+            {
+                "action": "Edit",
+                "src": "assets/icons/edit.svg",
+                "img_class": "w-4 h-4 flex gap-4",
+                "permission": "horilla_core.change_multiplecurrency",
+                "attrs": """
+                            hx-get="{get_edit_url}"
+                            hx-target="#modalBox"
+                            hx-swap="innerHTML"
+                            onclick="openModal()"
+                            """,
+            },
+            {
+                "action": "Delete",
+                "src": "assets/icons/a4.svg",
+                "img_class": "w-4 h-4",
+                "permission": "horilla_core.delete_multiplecurrency",
+                "attrs": """
+                                hx-post="{get_delete_url}"
+                                hx-target="#modalBox"
+                                hx-swap="innerHTML"
+                                hx-trigger="click"
+                                onclick="openModal()"
+                                """,
+            },
+        ]
         return actions
 
 

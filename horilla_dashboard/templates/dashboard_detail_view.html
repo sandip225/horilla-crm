@@ -111,7 +111,7 @@
 
                                                             <!-- Edit/Update option - for chart and table components -->
                                                             {% has_perm "horilla_dashboard.change_dashboard" as can_change_dashboard %}
-                                                            {% if can_change_dashboard or request.user.is_superuser or instance.dashboard_owner == request.user %}
+                                                            {% if can_change_dashboard or instance.dashboard_owner == request.user %}
                                                                 {% if component.component_type == 'chart' or component.component_type == 'table_data' %}
                                                                     {% if not component.reports %}
                                                                         <li>
@@ -430,7 +430,7 @@
                         </div>
                         <button type="button" onclick="closeReorderModal()"
                             class="text-gray-500 hover:text-red-500 text-xl cursor-pointer">
-                            <img src="{% static 'assets/icons/close.svg' %}" alt="icon" />
+                            <img src="{% static 'assets/icons/close.svg' %}" alt="{% trans 'Close' %}" />
                         </button>
                     </div>
                 </div>
