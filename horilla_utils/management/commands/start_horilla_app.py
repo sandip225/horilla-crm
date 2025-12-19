@@ -28,11 +28,29 @@ class Command(BaseCommand):
             dest="project_name",
             help="Project name for URL configuration (default: derived from settings)",
         )
+        parser.add_argument(
+            "--languages",
+            "-l",
+            dest="languages",
+            nargs="+",
+            default=None,
+            help="Language codes to create locale folders for (default: all languages from settings.LANGUAGES)",
+        )
 
     def handle(self, *args, **options):
         app_name = options["app_name"]
         directory = options["directory"]
         project_name = "horilla"
+        languages = options["languages"]
+
+        # If no languages specified, get all languages from settings.LANGUAGES
+        if languages is None:
+            languages = [lang_code for lang_code, lang_name in settings.LANGUAGES]
+            self.stdout.write(
+                self.style.WARNING(
+                    f"No languages specified. Using all {len(languages)} languages from settings.LANGUAGES"
+                )
+            )
 
         # If no project name specified, try to get it from settings module
         if not project_name:
@@ -68,6 +86,9 @@ class Command(BaseCommand):
             # Create static directory
             self._create_static_directory(target_dir, app_name)
 
+            # Create locale directory with language folders
+            self._create_locale_directory(target_dir, languages)
+
         except Exception as e:
             self.stderr.write(f"Error creating app: {str(e)}")
             # Clean up if there was an error
@@ -90,16 +111,24 @@ class Command(BaseCommand):
             f.write(f'"""\nPackage initialization for the {app_name} app\n"""\n\n')
 
         # apps.py
+        # Convert app_name to proper class name (e.g., 'my_app' -> 'MyAppConfig')
+        class_name = (
+            "".join(word.capitalize() for word in app_name.split("_")) + "Config"
+        )
+
+        # Convert app_name to verbose name with spaces (e.g., 'my_app' -> 'My App')
+        verbose_name = " ".join(word.capitalize() for word in app_name.split("_"))
+
         with open(os.path.join(target_dir, "apps.py"), "w") as f:
             f.write(
                 f'"""\nAppConfig for the {app_name} app\n"""\n\n'
                 "from django.apps import AppConfig\n"
                 "from django.utils.translation import gettext_lazy as _\n\n"
-                f"class {app_name.capitalize()}Config(AppConfig):\n"
+                f"class {class_name}(AppConfig):\n"
                 f'    """App configuration class for {app_name}."""\n'
                 "    default_auto_field = 'django.db.models.BigAutoField'\n"
                 f"    name = '{app_name}'\n"
-                f"    verbose_name = _('{app_name.title()}')\n\n"
+                f"    verbose_name = _('{verbose_name}')\n\n"
                 "    def ready(self):\n"
                 '        """Run app initialization logic (executed after Django setup).\n'
                 "        Used to auto-register URLs and connect signals if required.\n"
@@ -114,7 +143,7 @@ class Command(BaseCommand):
                 "            )\n"
                 "        except Exception as e:\n"
                 "            import logging\n"
-                f'            logging.warning(f"{app_name.capitalize()}Config.ready failed: {{e}}")\n'
+                f'            logging.warning(f"{class_name}.ready failed: {{e}}")\n'
                 "            pass\n\n"
                 "        super().ready()\n"
             )
@@ -154,7 +183,7 @@ class Command(BaseCommand):
         migrations_dir = os.path.join(target_dir, "migrations")
         os.makedirs(migrations_dir, exist_ok=True)
         with open(os.path.join(migrations_dir, "__init__.py"), "w") as f:
-            f.write('"""\nMigration package for the {app_name} app\n"""\n')
+            f.write(f'"""\nMigration package for the {app_name} app\n"""\n')
 
     def _create_additional_files(self, app_name, target_dir):
         """Create additional Python files for the app"""
@@ -246,8 +275,27 @@ class Command(BaseCommand):
         with open(os.path.join(templatetags_dir, "__init__.py"), "w") as f:
             f.write("")
 
-        # Create custom tags file
-
         self.stdout.write(
             "Created templatetags/ directory with __init__.py and custom tags file"
+        )
+
+    def _create_locale_directory(self, target_dir, languages):
+        """
+        Create locale directory structure for internationalization (i18n).
+        Works across macOS, Windows, and Linux.
+
+        Args:
+            target_dir (str): Path to the app folder
+            languages (list): List of language codes (e.g., ['en', 'es', 'fr'])
+        """
+        locale_base_dir = os.path.join(target_dir, "locale")
+
+        # Create locale folders for each language
+        for lang_code in languages:
+            # Create the LC_MESSAGES directory for each language
+            lc_messages_dir = os.path.join(locale_base_dir, lang_code, "LC_MESSAGES")
+            os.makedirs(lc_messages_dir, exist_ok=True)
+
+        self.stdout.write(
+            f"Created locale/ directory with {len(languages)} language folders"
         )
