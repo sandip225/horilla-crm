@@ -8,6 +8,7 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
+from horilla.auth.models import User
 from horilla_core.mixins import OwnerQuerysetMixin
 from horilla_generics.forms import (
     HorillaModelForm,
@@ -22,7 +23,6 @@ from .models import (
     DatedConversionRate,
     FiscalYear,
     Holiday,
-    HorillaUser,
     MultipleCurrency,
     Role,
 )
@@ -645,7 +645,7 @@ class BusinessHourForm(HorillaModelForm):
 
 class UserFormClass(HorillaMultiStepForm):
     class Meta:
-        model = HorillaUser
+        model = User
         fields = "__all__"
         # exclude = ['profile']
 
@@ -675,7 +675,7 @@ class UserFormClass(HorillaMultiStepForm):
         email = self.cleaned_data.get("email")
 
         if email:
-            queryset = HorillaUser.objects.filter(email=email)
+            queryset = User.objects.filter(email=email)
             if self.instance and self.instance.pk:
                 queryset = queryset.exclude(pk=self.instance.pk)
 
@@ -683,6 +683,72 @@ class UserFormClass(HorillaMultiStepForm):
                 raise forms.ValidationError("A user with this email already exists.")
 
         return email
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field in ["first_name", "last_name", "email", "contact_number"]:
+            if field in self.fields:
+                self.fields[field].required = True
+
+        self.fields["country"].widget.attrs.update(
+            {
+                "hx-get": reverse_lazy("horilla_core:get_country_subdivisions"),
+                "hx-target": "#id_state",
+                "hx-trigger": "change",
+                "hx-swap": "innerHTML",
+            }
+        )
+
+        self.fields["state"] = forms.ChoiceField(
+            choices=[],
+            required=False,
+            widget=forms.Select(
+                attrs={"id": "id_state", "class": "js-example-basic-single headselect"}
+            ),
+        )
+
+        if "country" in self.data:
+            country_code = self.data.get("country")
+            self.fields["state"].choices = self.get_subdivision_choices(country_code)
+        elif self.instance.pk and self.instance.country:
+            self.fields["state"].choices = self.get_subdivision_choices(
+                self.instance.country.code
+            )
+
+    def get_subdivision_choices(self, country_code):
+        try:
+            subdivisions = list(
+                pycountry.subdivisions.get(country_code=country_code.upper())
+            )
+            return [(sub.code, sub.name) for sub in subdivisions]
+        except:
+            return []
+
+
+class UserFormSingle(HorillaModelForm):
+    class Meta:
+        model = User
+        fields = [
+            "profile",
+            "email",
+            "first_name",
+            "last_name",
+            "contact_number",
+            "is_active",
+            "country",
+            "state",
+            "city",
+            "zip_code",
+            "department",
+            "role",
+            "language",
+            "time_zone",
+            "date_format",
+            "time_format",
+            "date_time_format",
+            "currency",
+        ]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -743,7 +809,7 @@ class UserFormClassSingle(HorillaModelForm):
     )
 
     class Meta:
-        model = HorillaUser
+        model = User
         fields = [
             "profile",
             "email",
@@ -786,7 +852,7 @@ class UserFormClassSingle(HorillaModelForm):
         if not username:
             raise ValidationError(_("Username is required."))
 
-        existing_user = HorillaUser.objects.filter(username=username)
+        existing_user = User.objects.filter(username=username)
         if self.instance and self.instance.pk:
             existing_user = existing_user.exclude(pk=self.instance.pk)
 
@@ -1009,7 +1075,7 @@ class AddUsersToRoleForm(forms.Form):
         ),
     )
     users = forms.ModelMultipleChoiceField(
-        queryset=HorillaUser.objects.all(),
+        queryset=User.objects.all(),
         label=_("Users"),
         help_text=_("Select one or more users to assign to the role."),
         widget=forms.SelectMultiple(
@@ -1017,7 +1083,10 @@ class AddUsersToRoleForm(forms.Form):
                 "class": "select2-pagination w-full",
                 "data-url": reverse_lazy(
                     f"horilla_generics:model_select2",
-                    kwargs={"app_label": "horilla_core", "model_name": "HorillaUser"},
+                    kwargs={
+                        "app_label": "horilla_core",
+                        "model_name": str(User.__name__),
+                    },
                 ),
                 "data-placeholder": f"Select user",
                 "multiple": "multiple",
@@ -1067,7 +1136,7 @@ class AddUsersToRoleForm(forms.Form):
 
 class RegionalFormattingForm(HorillaModelForm):
     class Meta:
-        model = HorillaUser
+        model = User
         fields = [
             "date_format",
             "time_format",

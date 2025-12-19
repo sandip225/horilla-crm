@@ -21,11 +21,11 @@ from django.db import transaction
 from django.db.models.signals import post_migrate, post_save
 from django.dispatch import Signal, receiver
 
+from horilla.auth.models import User
 from horilla_core.models import (
     Company,
     FieldPermission,
     FiscalYear,
-    HorillaUser,
     MultipleCurrency,
     Role,
 )
@@ -156,7 +156,7 @@ def add_custom_permissions(sender, **kwargs):
 post_migrate.connect(add_custom_permissions)
 
 
-@receiver(post_save, sender=HorillaUser)
+@receiver(post_save, sender=User)
 def ensure_view_own_permissions(sender, instance, created, **kwargs):
     """
     Assign view_own permissions to newly created non-superuser users.
@@ -225,7 +225,7 @@ def ensure_role_view_own_permissions(sender, instance, created, **kwargs):
     transaction.on_commit(assign_permissions)
 
 
-@receiver(post_save, sender=HorillaUser)
+@receiver(post_save, sender=User)
 def user_default_field_permissions(sender, instance, created, **kwargs):
     """
     Assign default field permissions to newly created users.

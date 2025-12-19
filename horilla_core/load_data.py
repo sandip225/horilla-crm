@@ -14,7 +14,7 @@ from django.shortcuts import redirect, render
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 
-from horilla_core.models import HorillaUser
+from horilla.auth.models import User
 
 
 def set_sqlite_foreign_keys(enabled: bool):
@@ -30,7 +30,7 @@ class LoadDatabaseConditionView(View):
     """
 
     def get_initialize_condition(self):
-        initialize_database = not HorillaUser.objects.exists()
+        initialize_database = not User.objects.exists()
         return initialize_database
 
 

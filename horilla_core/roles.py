@@ -11,10 +11,11 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import TemplateView
 
+from horilla.auth.models import User
 from horilla_core.decorators import htmx_required, permission_required_or_denied
 from horilla_core.filters import UserFilter
 from horilla_core.forms import AddUsersToRoleForm
-from horilla_core.models import HorillaUser, Role
+from horilla_core.models import Role
 from horilla_generics.views import (
     HorillaListView,
     HorillaNavView,
@@ -75,7 +76,7 @@ class AddRole(LoginRequiredMixin, HorillaSingleFormView):
 @method_decorator(htmx_required, name="dispatch")
 class AddUserToRole(LoginRequiredMixin, HorillaSingleFormView):
 
-    model = HorillaUser
+    model = User
     form_class = AddUsersToRoleForm
     full_width_fields = ["role", "users"]
     modal_height = False
@@ -103,11 +104,14 @@ class AddUserToRole(LoginRequiredMixin, HorillaSingleFormView):
 
 @method_decorator(htmx_required, name="dispatch")
 @method_decorator(
-    permission_required_or_denied("horilla_core.view_horillauser"), name="dispatch"
+    permission_required_or_denied(
+        f"{User._meta.app_label}.view_{User._meta.model_name}"
+    ),
+    name="dispatch",
 )
 class RoleUsersListView(LoginRequiredMixin, HorillaListView):
 
-    model = HorillaUser
+    model = User
     filterset_class = UserFilter
     table_width = False
     view_id = "user-roles"
@@ -130,7 +134,9 @@ class RoleUsersListView(LoginRequiredMixin, HorillaListView):
         if "section" in self.request.GET:
             query_params["section"] = self.request.GET.get("section")
         query_string = urlencode(query_params)
-        if self.request.user.has_perm("horilla_core.view_horillauser"):
+        if self.request.user.has_perm(
+            f"{User._meta.app_label}.view_{User._meta.model_name}"
+        ):
             htmx_attrs = {
                 "hx-get": f"{{get_detail_view_url}}?{query_string}",
                 "hx-target": "#role-container",
@@ -178,7 +184,10 @@ class RoleUsersListView(LoginRequiredMixin, HorillaListView):
 
 @method_decorator(htmx_required, name="dispatch")
 @method_decorator(
-    permission_required_or_denied("horilla_core.view_horillauser"), name="dispatch"
+    permission_required_or_denied(
+        f"{User._meta.app_label}.view_{User._meta.model_name}"
+    ),
+    name="dispatch",
 )
 class UsersInRoleView(LoginRequiredMixin, TemplateView):
 
@@ -187,14 +196,17 @@ class UsersInRoleView(LoginRequiredMixin, TemplateView):
 
 @method_decorator(htmx_required, name="dispatch")
 @method_decorator(
-    permission_required_or_denied("horilla_core.view_horillauser"), name="dispatch"
+    permission_required_or_denied(
+        f"{User._meta.app_label}.view_{User._meta.model_name}"
+    ),
+    name="dispatch",
 )
 class RoleUsersNavView(LoginRequiredMixin, HorillaNavView):
 
     search_url = reverse_lazy("horilla_core:view_user_in_role_list_view")
     main_url = reverse_lazy("horilla_core:view_user_in_role")
     filterset_class = UserFilter
-    model_name = "HorillaUser"
+    model_name = str(User.__name__)
     model_app_label = "horilla_core"
     nav_width = False
     gap_enabled = False
@@ -228,7 +240,7 @@ class DeleteUserFromRole(LoginRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         user_id = kwargs.get("pk")
         try:
-            user = get_object_or_404(HorillaUser, pk=user_id)
+            user = get_object_or_404(User, pk=user_id)
         except:
             messages.error(request, _("The requested user does not exist."))
             return HttpResponse(

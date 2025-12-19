@@ -4,6 +4,7 @@ Serializers for horilla_core models
 
 from rest_framework import serializers
 
+from horilla.auth.models import User
 from horilla_core.models import (
     BusinessHour,
     Company,
@@ -11,7 +12,6 @@ from horilla_core.models import (
     Department,
     Holiday,
     HorillaAttachment,
-    HorillaUser,
     ImportHistory,
     PartnerRole,
     Role,
@@ -47,12 +47,12 @@ class HorillaUserSerializer(serializers.ModelSerializer):
     """Serializer for HorillaUser model"""
 
     class Meta:
-        model = HorillaUser
+        model = User
         fields = "__all__"
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
-        user = HorillaUser.objects.create_user(**validated_data)
+        user = User.objects.create_user(**validated_data)
         return user
 
     def update(self, instance, validated_data):

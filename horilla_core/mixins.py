@@ -2,7 +2,7 @@ import calendar as cal_module
 from calendar import monthcalendar
 from datetime import datetime, timedelta
 
-from horilla_core.models import HorillaUser
+from horilla.auth.models import User
 
 
 class CompanyFilterMixin:
@@ -295,7 +295,7 @@ class FiscalYearCalendarMixin:
 class OwnerQuerysetMixin:
     """
     Mixin to dynamically filter any ForeignKey or ManyToManyField
-    whose related model is `HorillaUser`, based on the current user.
+    whose related model is `User`, based on the current user.
 
     - For superusers: Shows all users.
     - For non-superusers: Shows the current user + their subordinates (recursive via subroles).
@@ -310,7 +310,7 @@ class OwnerQuerysetMixin:
             return
 
         if user.is_superuser:
-            allowed_users = HorillaUser.objects.all()
+            allowed_users = User.objects.all()
         else:
             user_role = getattr(user, "role", None)
             if user_role:
@@ -326,26 +326,26 @@ class OwnerQuerysetMixin:
                 subordinate_roles = get_subordinate_roles(user_role)
                 # all_roles = [user_role] + subordinate_roles
 
-                subordinate_users = HorillaUser.objects.filter(
+                subordinate_users = User.objects.filter(
                     role__in=subordinate_roles
                 ).distinct()
-                allowed_users = HorillaUser.objects.filter(
+                allowed_users = User.objects.filter(
                     id__in=[user.id]
                     + list(subordinate_users.values_list("id", flat=True))
                 )
             else:
-                allowed_users = HorillaUser.objects.filter(id=user.id)
+                allowed_users = User.objects.filter(id=user.id)
 
         for field_name, field in self.fields.items():
             model_field = self._meta.model._meta.get_field(field_name)
 
-            if model_field.is_relation and model_field.related_model == HorillaUser:
+            if model_field.is_relation and model_field.related_model == User:
                 field.queryset = allowed_users
 
 
 class OwnerFiltersetMixin:
     """
-    Mixin to dynamically filter `HorillaUser`-related filters
+    Mixin to dynamically filter `User`-related filters
     in a Django FilterSet.
 
     Usage:
@@ -369,7 +369,7 @@ class OwnerFiltersetMixin:
 
         # Determine allowed users
         if user.is_superuser:
-            allowed_users = HorillaUser.objects.all()
+            allowed_users = User.objects.all()
         else:
             user_role = getattr(user, "role", None)
             if user_role:
@@ -383,21 +383,21 @@ class OwnerFiltersetMixin:
                     return all_sub_roles
 
                 subordinate_roles = get_subordinate_roles(user_role)
-                subordinate_users = HorillaUser.objects.filter(
+                subordinate_users = User.objects.filter(
                     role__in=subordinate_roles
                 ).distinct()
-                allowed_users = HorillaUser.objects.filter(
+                allowed_users = User.objects.filter(
                     id__in=[user.id]
                     + list(subordinate_users.values_list("id", flat=True))
                 )
             else:
-                allowed_users = HorillaUser.objects.filter(id=user.id)
+                allowed_users = User.objects.filter(id=user.id)
 
-        # Restrict queryset for filters that reference HorillaUser
+        # Restrict queryset for filters that reference User
         for field_name, filter_obj in self.filters.items():
             try:
                 model_field = self._meta.model._meta.get_field(field_name)
-                if model_field.is_relation and model_field.related_model == HorillaUser:
+                if model_field.is_relation and model_field.related_model == User:
                     if hasattr(filter_obj, "field") and hasattr(
                         filter_obj.field, "queryset"
                     ):

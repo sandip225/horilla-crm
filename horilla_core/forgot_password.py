@@ -13,8 +13,9 @@ from django.utils.html import strip_tags
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views import View
 
+from horilla.auth.models import User
 from horilla_core.decorators import htmx_required
-from horilla_core.models import Company, HorillaUser
+from horilla_core.models import Company
 from horilla_mail.models import HorillaMailConfiguration
 
 
@@ -32,7 +33,7 @@ class ForgotPasswordView(View):
         email_or_username = request.POST.get("email")
 
         try:
-            user = HorillaUser.objects.get(
+            user = User.objects.get(
                 Q(email=email_or_username) | Q(username=email_or_username)
             )
 
@@ -80,7 +81,7 @@ class ForgotPasswordView(View):
             email.send(fail_silently=False)
             return render(request, self.success_template)
 
-        except HorillaUser.DoesNotExist:
+        except User.DoesNotExist:
             messages.error(request, "User with this email or username does not exist.")
 
         except Exception as e:
@@ -98,8 +99,7 @@ class PasswordResetConfirmView(View):
         """Display the password reset form"""
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
-            user = HorillaUser.objects.get(pk=uid)
-            print(uid, user)
+            user = User.objects.get(pk=uid)
 
             if default_token_generator.check_token(user, token):
                 context = {
@@ -119,7 +119,7 @@ class PasswordResetConfirmView(View):
         """Handle password reset via HTMX"""
         try:
             uid = force_str(urlsafe_base64_decode(uidb64))
-            user = HorillaUser.objects.get(pk=uid)
+            user = User.objects.get(pk=uid)
 
             if not default_token_generator.check_token(user, token):
                 messages.error(
@@ -159,7 +159,7 @@ class PasswordResetConfirmView(View):
             }
             return render(request, self.template_name, context)
 
-        except (TypeError, ValueError, OverflowError, HorillaUser.DoesNotExist):
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             messages.error(request, "Invalid password reset link.")
             context = {"validlink": False}
             return render(request, self.template_name, context)

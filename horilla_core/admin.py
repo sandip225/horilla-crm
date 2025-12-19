@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.contenttypes.models import ContentType
 
+from horilla.auth.models import User
+
 from .models import *
 
 admin.site.register(KanbanGroupBy)
@@ -33,9 +35,9 @@ admin.site.register(ExportSchedule)
 admin.site.register(FieldPermission)
 
 
-@admin.register(HorillaUser)
+@admin.register(User)
 class HorillaUserAdmin(UserAdmin):
-    model = HorillaUser
+    model = User
     list_display = ["username", "email", "is_active", "is_staff"]
     fieldsets = (
         (None, {"fields": ("username", "password")}),

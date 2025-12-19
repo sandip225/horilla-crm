@@ -10,19 +10,22 @@ from urllib.parse import urlencode, urlparse
 import pycountry
 from django.apps import apps
 from django.contrib import messages
-from django.contrib.auth import authenticate, get_user_model, login, logout
-from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.functional import cached_property  # type: ignore
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.generic import TemplateView
+from django.views.generic.base import RedirectView
 
 from horilla import settings
+from horilla.auth.models import User
 from horilla.exceptions import HorillaHttp404
+from horilla.utils.branding import load_branding
 from horilla_core.forms import (
     BusinessHourForm,
     CompanyFormClassSingle,
@@ -36,7 +39,6 @@ from horilla_core.models import (
     Company,
     DatedConversionRate,
     Holiday,
-    HorillaUser,
     MultipleCurrency,
     Role,
 )
@@ -51,7 +53,6 @@ from horilla_generics.views import (
 from horilla_mail.models import HorillaMailConfiguration
 
 logger = logging.getLogger(__name__)
-User = get_user_model()
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.decorators import method_decorator
@@ -449,10 +450,10 @@ class CompanyMultiFormView(LoginRequiredMixin, HorillaMultiStepFormView):
         return HttpResponse(mark_safe(response_html))
 
     step_titles = {
-        "1": "Basic Information",
-        "2": "Business Details",
-        "3": "Location & Locale",
-        "4": "Preferences",
+        "1": _("Basic Information"),
+        "2": _("Business Details"),
+        "3": _("Location & Locale"),
+        "4": _("Preferences"),
     }
 
     def get_form_kwargs(self):
@@ -532,7 +533,8 @@ class CompanyFormView(LoginRequiredMixin, HorillaSingleFormView):
 class SwitchCompanyView(LoginRequiredMixin, View):
     def post(self, request, company_id):
         if request.user.is_authenticated and (
-            request.user.is_superuser or request.user.company_id == company_id
+            request.user.has_perm("horilla_core.can_switch_company")
+            or request.user.company_id == company_id
         ):
             request.session["active_company_id"] = company_id
         return redirect(request.META.get("HTTP_REFERER", "/"))
@@ -1170,3 +1172,11 @@ class RolesView(LoginRequiredMixin, TemplateView):
         context["roles_data"] = roles_data
         context["roles_count"] = roles.count()
         return context
+
+
+class FaviconRedirectView(RedirectView):
+    """Redirect to the configured favicon."""
+
+    branding = load_branding()
+    favicon_path = branding.get("FAVICON_PATH", "favicon.ico")
+    url = staticfiles_storage.url(favicon_path)

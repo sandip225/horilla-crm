@@ -8,9 +8,10 @@ from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 
+from horilla.auth.models import User
 from horilla_core.decorators import db_initialization, htmx_required
 from horilla_core.forms import CompanyFormClass, UserFormClassSingle
-from horilla_core.models import Company, HorillaUser, Role
+from horilla_core.models import Company, Role
 from horilla_core.progress import ProgressStepsMixin
 from horilla_generics.views import HorillaSingleFormView
 
@@ -21,7 +22,7 @@ class InitializeDatabaseConditionView(View):
     """
 
     def get_initialize_condition(self):
-        initialize_database = not HorillaUser.objects.exists()
+        initialize_database = not User.objects.exists()
         return initialize_database
 
 
@@ -96,11 +97,11 @@ class InitializeDatabaseCompany(LoginRequiredMixin, View, ProgressStepsMixin):
         return redirect(next_url)
 
 
-@method_decorator(db_initialization(model=HorillaUser), name="dispatch")
+@method_decorator(db_initialization(model=User), name="dispatch")
 @method_decorator(htmx_required(login=False), name="dispatch")
 class SignUpFormView(HorillaSingleFormView, ProgressStepsMixin):
 
-    model = HorillaUser
+    model = User
     view_id = "user-form-view"
     form_url = reverse_lazy("horilla_core:sign_up_user")
     form_class = UserFormClassSingle
@@ -113,7 +114,7 @@ class SignUpFormView(HorillaSingleFormView, ProgressStepsMixin):
         <div class="flex justify-end pt-5">
             <button class="border-[1px] border-[solid] border-[#e54f38] hover:border-[#9b210f] hover:bg-secondary-600 rounded-[5px] px-[15px] py-[8px] text-[#e54f38] flex gap-3 btn-with-icon border-[#e54f38] [transition:.3s] hover:text-[white]">
                 {% trans "Next" %}
-                <img src="{% static 'assets/icons/ar3.svg' %}" alt="" />
+                <img src="{% static 'assets/icons/ar3.svg' %}" alt="{% trans 'Next' %}" />
             </button>
         </div>
     """
@@ -169,7 +170,7 @@ class InitializeCompanyFormView(
         <div class="flex justify-end pt-5">
             <button class="border-[1px] border-[solid] border-[#e54f38] hover:border-[#9b210f] hover:bg-secondary-600 rounded-[5px] px-[15px] py-[8px] text-[#e54f38] flex gap-3 btn-with-icon border-[#e54f38] [transition:.3s] hover:text-[white]">
                 {% trans "Next" %}
-                <img src="{% static 'assets/icons/ar3.svg' %}" alt="" />
+                <img src="{% static 'assets/icons/ar3.svg' %}" alt="{% trans 'Next' %}" />
             </button>
         </div>
     """
@@ -181,7 +182,7 @@ class InitializeCompanyFormView(
     def form_valid(self, form):
         instance = form.save(commit=False)
         instance.save()
-        user = HorillaUser.objects.filter(is_superuser=True).first()
+        user = User.objects.filter(is_superuser=True).first()
         user.company = instance
         user.save(update_fields=["company"])
         self.request.session["company_id"] = instance.id

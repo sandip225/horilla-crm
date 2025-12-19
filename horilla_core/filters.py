@@ -1,9 +1,9 @@
+from horilla.auth.models import User
 from horilla_core.models import (
     Company,
     CustomerRole,
     Department,
     Holiday,
-    HorillaUser,
     PartnerRole,
     TeamRole,
 )
@@ -12,7 +12,7 @@ from horilla_generics.filters import HorillaFilterSet
 
 class UserFilter(HorillaFilterSet):
     class Meta:
-        model = HorillaUser
+        model = User
         fields = "__all__"
         exclude = ["profile"]
         search_fields = ["first_name", "email", "last_name"]

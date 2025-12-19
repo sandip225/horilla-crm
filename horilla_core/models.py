@@ -1032,7 +1032,7 @@ class HorillaUser(AbstractUser):
 
     def super_user_status_col(self):
         """Returns the HTML for the super_user_status column in the list view."""
-        superuser_count = HorillaUser.objects.filter(is_superuser=True).count()
+        superuser_count = self.__class__.objects.filter(is_superuser=True).count()
         html = render_template(
             path="permissions/super_user_status_col.html",
             context={"instance": self, "superuser_count": superuser_count},
@@ -1044,7 +1044,7 @@ class HorillaImport(models.Model):
     class Meta:
         managed = False
         default_permissions = ()
-        permissions = (("can_view_horilla_import", "Can View Global Import"),)
+        permissions = (("can_view_horilla_import", _("Can View Global Import")),)
         verbose_name = _("Global Import")
 
 
@@ -1052,7 +1052,7 @@ class HorillaSettings(models.Model):
     class Meta:
         managed = False
         default_permissions = ()
-        permissions = (("can_view_horilla_settings", "Can View Global Settings"),)
+        permissions = (("can_view_horilla_settings", _("Can View Global Settings")),)
         verbose_name = _("Global Settings")
 
 
@@ -1060,7 +1060,7 @@ class HorillaExport(models.Model):
     class Meta:
         managed = False
         default_permissions = ()
-        permissions = (("can_view_horilla_export", "Can View Global Export"),)
+        permissions = (("can_view_horilla_export", _("Can View Global Export")),)
         verbose_name = _("Global Export")
 
 
@@ -1068,7 +1068,7 @@ class HorillaSwitchCompany(models.Model):
     class Meta:
         managed = False
         default_permissions = ()
-        permissions = (("can_switch_company", "Can Switch Company"),)
+        permissions = (("can_switch_company", _("Can Switch Company")),)
         verbose_name = _("Switch Company")
 
 
@@ -1076,7 +1076,7 @@ class HorillaAboutSystem(models.Model):
     class Meta:
         managed = False
         default_permissions = ()
-        permissions = (("can_view_horilla_about_system", "Can View About System"),)
+        permissions = (("can_view_horilla_about_system", _("Can View About System")),)
         verbose_name = _("About System")
 
 
@@ -1085,8 +1085,8 @@ class HorillaUserProfile(models.Model):
         managed = False
         default_permissions = ()
         permissions = (
-            ("can_view_profile", "Can View Profile"),
-            ("can_change_profile", "Can Change Profile"),
+            ("can_view_profile", _("Can View Profile")),
+            ("can_change_profile", _("Can Change Profile")),
         )
         verbose_name = _("User Profile")
 
@@ -1101,7 +1101,7 @@ class KanbanGroupBy(models.Model):
     )
     model_name = models.CharField(
         max_length=100,
-        help_text=_("Name of the model (e.g., 'HorillaUser') to group by."),
+        help_text=_("Name of the model (e.g., 'User') to group by."),
     )
     app_label = models.CharField(max_length=100)
     field_name = models.CharField(
@@ -2598,8 +2598,8 @@ class RecycleBin(models.Model):
     objects = CompanyFilteredManager()
 
     class Meta:
-        verbose_name = "Recycle Bin"
-        verbose_name_plural = "Recycle Bin"
+        verbose_name = _("Recycle Bin")
+        verbose_name_plural = _("Recycle Bin")
 
     def __str__(self):
         return f"{self.model_name} ({self.record_id}) - Deleted at {self.deleted_at}"
@@ -2702,8 +2702,8 @@ class RecycleBinPolicy(models.Model):
     objects = CompanyFilteredManager()
 
     class Meta:
-        verbose_name = "Recycle Bin Policy"
-        verbose_name_plural = "Recycle Bin Policies"
+        verbose_name = _("Recycle Bin Policy")
+        verbose_name_plural = _("Recycle Bin Policies")
 
     def save(self, *args, **kwargs):
         request = getattr(_thread_local, "request", None)
@@ -3155,7 +3155,7 @@ class FieldPermission(models.Model):
 
     # Link to either user or role (one must be set)
     user = models.ForeignKey(
-        HorillaUser,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
@@ -3186,8 +3186,8 @@ class FieldPermission(models.Model):
             ["user", "content_type", "field_name"],
             ["role", "content_type", "field_name"],
         ]
-        verbose_name = "Field Permission"
-        verbose_name_plural = "Field Permissions"
+        verbose_name = _("Field Permission")
+        verbose_name_plural = _("Field Permissions")
 
     def __str__(self):
         target = self.user.get_full_name() if self.user else self.role.role_name

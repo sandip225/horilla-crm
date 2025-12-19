@@ -1,11 +1,9 @@
 from functools import wraps
 
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseForbidden
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
-
-from horilla_core.models import HorillaUser
 
 
 def permission_required_or_denied(
@@ -120,7 +118,7 @@ def htmx_required(view_func=None, login=True):
 def db_initialization(model=None):
     """
     Decorator factory.
-    @method_decorator(db_initialization(model=HorillaUser), name="dispatch")
+    @method_decorator(db_initialization(model=User), name="dispatch")
     """
 
     def actual_decorator(view_func):

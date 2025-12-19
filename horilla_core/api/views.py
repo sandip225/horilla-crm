@@ -10,6 +10,7 @@ from rest_framework import filters, permissions, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from horilla.auth.models import User
 from horilla_core.api.docs import BULK_DELETE_DOCS, BULK_UPDATE_DOCS, SEARCH_FILTER_DOCS
 from horilla_core.api.mixins import BulkOperationsMixin, SearchFilterMixin
 from horilla_core.api.permissions import IsCompanyMember, IsOwnerOrAdmin
@@ -33,7 +34,6 @@ from horilla_core.models import (
     Department,
     Holiday,
     HorillaAttachment,
-    HorillaUser,
     ImportHistory,
     PartnerRole,
     Role,
@@ -125,9 +125,9 @@ class RoleViewSet(SearchFilterMixin, BulkOperationsMixin, viewsets.ModelViewSet)
 
 
 class HorillaUserViewSet(SearchFilterMixin, BulkOperationsMixin, viewsets.ModelViewSet):
-    """ViewSet for HorillaUser model"""
+    """ViewSet for User model"""
 
-    queryset = HorillaUser.objects.all()
+    queryset = User.objects.all()
     serializer_class = HorillaUserSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdmin]
     search_fields = ["username", "email", "first_name", "last_name"]
