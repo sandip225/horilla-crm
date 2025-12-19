@@ -6,6 +6,7 @@ for the Horilla Core app.
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
+from horilla.auth.models import User
 from horilla.menu import my_settings_menu, settings_menu
 from horilla_core.models import CustomerRole, Department, PartnerRole, Role, TeamRole
 
@@ -122,7 +123,7 @@ class GeneralSettings:
             "hx-push-url": "true",
             "hx-select": "#users-view",
             "hx-select-oob": "#settings-sidebar",
-            "perm": "horilla_core.view_horillauser",
+            "perm": f"{User._meta.app_label}.view_{User._meta.model_name}",
             "order": 2,
         },
         {

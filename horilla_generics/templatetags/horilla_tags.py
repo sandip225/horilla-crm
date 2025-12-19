@@ -16,6 +16,7 @@ from django.utils.encoding import force_str
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
+from horilla.auth.models import User
 from horilla.menu.sub_section_menu import get_sub_section_menu
 from horilla.registry.js_registry import get_registered_js
 from horilla_core.models import MultipleCurrency
@@ -180,7 +181,7 @@ def get_steps(dictionary, key):
 @register.filter
 def render_action_button(action, obj):
     attrs = format(action.get("attrs", ""), obj).strip()
-    tooltip = action.get("action", "")
+    tooltip = _(action.get("action", ""))
 
     if "src" in action:
         img_class = action.get("img_class", "")
@@ -1132,6 +1133,12 @@ def has_action_permission(action, context):
     owner_field = action.get("owner_field")
     owner_method = action.get("owner_method")
 
+    perms = action.get("permissions", [])
+    perm_logic = action.get("permission_logic", "OR")
+
+    if not perm and not own_perm and not owner_field or user.is_superuser:
+        return True
+
     # Automatically detect if we should use intermediate model
     intermediate_config = action.get("intermediate_model")
 
@@ -1143,10 +1150,6 @@ def has_action_permission(action, context):
             target_obj = (
                 intermediate_obj  # Use intermediate object for permission check
             )
-
-    # If no permissions are defined, allow by default
-    if not perm and not own_perm and not owner_field:
-        return True
 
     # Validation: own_permission requires owner_field or owner_method
     if own_perm and not owner_field and not owner_method:
@@ -1165,6 +1168,22 @@ def has_action_permission(action, context):
     # Check global permission first
     if perm and user.has_perm(perm):
         return True
+
+    if perms:
+        perm_checks = [user.has_perm(p) for p in perms]
+
+        if perm_logic.upper() == "OR":
+            # User needs ANY of the permissions
+            if any(perm_checks):
+                return True
+        elif perm_logic.upper() == "AND":
+            # User needs ALL of the permissions
+            if all(perm_checks):
+                return True
+        else:
+            raise ValueError(
+                f"Invalid permission_logic '{perm_logic}'. Must be 'OR' or 'AND'."
+            )
 
     # Check ownership-based permission
     if own_perm and target_obj:
@@ -1301,3 +1320,16 @@ def wrap_in_list(value):
     if isinstance(value, dict):
         return [value]
     return value
+
+
+@register.simple_tag
+def get_user_model_meta():
+    """
+    Get the User model metadata
+    Returns: dict with app_label, model_name, and model_name_original
+    """
+    return {
+        "app_label": User._meta.app_label,
+        "model_name": User._meta.model_name,
+        "model_class_name": User.__name__,
+    }

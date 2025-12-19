@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load horilla_tags %}
 <div id="assign-users-modal">
     <div class="flex justify-between items-center p-4 ">
         <h2 class="text-lg font-semibold text-gray-900">{% trans "Assign Users" %}</h2>
@@ -8,6 +9,7 @@
             </svg>
         </button>
     </div>
+    {% get_user_model_meta as user_meta %}
 
     <form method="post" action="{% url 'horilla_core:assign_users_perm' %}" hx-post="{% url 'horilla_core:assign_users_perm' %}" hx-target="#assign-users-modal" hx-swap="outerHTML">
         {% csrf_token %}
@@ -19,7 +21,7 @@
                     id="selected-users"
                     multiple
                     class="select2-pagination w-full text-sm"
-                    data-url="{% url 'horilla_generics:model_select2' app_label='horilla_core' model_name='HorillaUser' %}?is_superuser=false"
+                    data-url="{% url 'horilla_generics:model_select2' app_label=user_meta.app_label model_name=user_meta.model_class_name %}?is_superuser=false"
                     data-placeholder="{% trans 'Select users' %}"
                     onchange="updateSelectedUserIds()">
                 </select>
