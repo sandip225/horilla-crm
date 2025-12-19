@@ -1,4 +1,4 @@
-{% load static %}
+{% load static  i18n %}
 {% load horilla_tags %}
 <div id="messages-container" style="display: none;">
   {% for message in messages %}
@@ -31,7 +31,7 @@
               hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
             {% endif %}
           {% endif %}>
-          {{ choice.0 }}
+           {% trans choice.0 %}
         </div>
       </li>
 
