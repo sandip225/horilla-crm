@@ -6,14 +6,20 @@ This module provides middleware for:
 - Handling custom Horilla exceptions.
 """
 
-from django.conf import settings
+import logging
+
 from django.http import HttpResponse, HttpResponseNotAllowed
 from django.shortcuts import redirect, render
+from django.urls import Resolver404, resolve
 from django.utils import timezone
+from django.utils.deprecation import MiddlewareMixin
 
 from horilla.exceptions import HorillaHttp404
+from horilla.menu.sub_section_menu import sub_section_menu as menu_registry
 
 from .models import Company
+
+logger = logging.getLogger(__name__)
 
 
 class ActiveCompanyMiddleware:
@@ -167,3 +173,94 @@ class HTMXRedirectMiddleware:
             return new_response
 
         return response
+
+
+class EnsureSectionMiddleware(MiddlewareMixin):
+    def process_request(self, request):
+        # Skip for static files, admin, etc.
+        if request.path.startswith("/static/") or request.path.startswith("/admin/"):
+            return None
+
+        # Check if this is an HTMX request
+        is_htmx = request.headers.get("HX-Request") == "true"
+
+        # If it's HTMX request, skip all section validation/modification
+        # (whether hx-push-url is true or false, we don't modify sections for HTMX)
+        if is_htmx:
+            return None
+
+        # Get current section value
+        current_section = request.GET.get("section", "").strip()
+
+        # Check if section parameter is missing or empty
+        if not current_section:
+            section = self.get_section_from_path(request.path)
+
+            # Only redirect if a valid section was found
+            if section:
+                query_params = request.GET.copy()
+                query_params["section"] = section
+
+                new_url = f"{request.path}?{query_params.urlencode()}"
+                return redirect(new_url)
+        else:
+            # Validate if the current section exists in menu_registry
+            valid_sections = self.get_valid_sections()
+
+            # If current section is invalid, try to get the correct one
+            if current_section not in valid_sections:
+                section = self.get_section_from_path(request.path)
+
+                if section:
+                    query_params = request.GET.copy()
+                    query_params["section"] = section
+
+                    new_url = f"{request.path}?{query_params.urlencode()}"
+                    return redirect(new_url)
+
+        return None
+
+    def get_valid_sections(self):
+        """Get all valid section values from menu_registry"""
+        valid_sections = set()
+        try:
+            for menu_cls in menu_registry:
+                section = getattr(menu_cls, "section", None)
+                if section:
+                    valid_sections.add(section)
+        except Exception as e:
+            logger.warning(f"Error getting valid sections: {e}")
+
+        return valid_sections
+
+    def get_section_from_path(self, path):
+        """Extract section by matching path with menu_registry URLs"""
+        try:
+            # First, try to match by URL
+            for menu_cls in menu_registry:
+                menu_url = str(getattr(menu_cls, "url", ""))
+
+                # Check if the current path matches the menu URL
+                if menu_url and path.startswith(menu_url):
+                    section = getattr(menu_cls, "section", None)
+                    if section:
+                        return section
+
+            # If no match found by URL, try to resolve and match by app_label
+            try:
+                resolved = resolve(path)
+                if hasattr(resolved, "app_name") and resolved.app_name:
+                    for menu_cls in menu_registry:
+                        if hasattr(menu_cls, "app_label"):
+                            cls_app_label = getattr(menu_cls, "app_label", None)
+                            if cls_app_label == resolved.app_name:
+                                section = getattr(menu_cls, "section", None)
+                                if section:
+                                    return section
+            except Resolver404:
+                pass
+
+        except Exception as e:
+            logger.warning(f"Error in get_section_from_path: {e}")
+
+        return None

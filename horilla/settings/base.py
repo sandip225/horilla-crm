@@ -118,6 +118,7 @@ MIDDLEWARE = [
     "horilla_core.middlewares.Horilla405Middleware",
     "horilla_core.middlewares.SVGSecurityMiddleware",
     "horilla_core.middlewares.HTMXRedirectMiddleware",
+    "horilla_core.middlewares.EnsureSectionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -145,6 +146,7 @@ TEMPLATES = [
                 "horilla.context_processors.unread_notifications",
                 "horilla.context_processors.menu_context_processor",
                 "horilla.context_processors.currency_context",
+                "horilla.context_processors.branding",
             ],
         },
     },
@@ -392,3 +394,5 @@ ALLOWED_LANGUAGES = [
 ]
 
 AUDITLOG_LOGENTRY_MODEL = "auditlog.LogEntry"
+
+BRANDING_MODULE = None
