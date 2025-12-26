@@ -13,7 +13,7 @@
         hx-trigger="submit"
         hx-select="#history-main"
         class="space-y-4"
-        onsubmit="closeFilterModal()">
+        hx-on::after-request="closeFilterModal()">
         {{ form.filter_date.label_tag }}
         {{ form.filter_date }}
 
