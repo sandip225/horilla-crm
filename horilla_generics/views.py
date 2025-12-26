@@ -17,7 +17,6 @@ from auditlog.models import LogEntry
 from django import forms
 from django.apps import apps
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.views import redirect_to_login
 from django.contrib.contenttypes.fields import GenericRelation
@@ -5656,6 +5655,7 @@ class HorillaSingleFormView(FormView):
     condition_model = None
     condition_field_choices = None
     condition_field_title = None
+    condition_hx_include = None
     header = True
     modal_height_class = None
     hx_attrs: dict = {}
@@ -5926,6 +5926,7 @@ class HorillaSingleFormView(FormView):
             condition_fields = self.condition_fields or []
             condition_model = self.condition_model
             condition_field_choices = self.condition_field_choices or {}
+            condition_hx_include = self.condition_hx_include
 
             class DynamicForm(OwnerQuerysetMixin, HorillaModelForm):
                 class Meta:
@@ -5964,6 +5965,7 @@ class HorillaSingleFormView(FormView):
                     kwargs["condition_fields"] = condition_fields
                     kwargs["condition_model"] = condition_model
                     kwargs["condition_field_choices"] = condition_field_choices
+                    kwargs["condition_hx_include"] = condition_hx_include
                     super().__init__(*args, **kwargs)
 
             return DynamicForm
@@ -5978,6 +5980,7 @@ class HorillaSingleFormView(FormView):
         kwargs["condition_model"] = self.condition_model
         kwargs["condition_field_choices"] = self.condition_field_choices or {}
         kwargs["hidden_fields"] = getattr(self, "hidden_fields", [])
+        kwargs["condition_hx_include"] = self.condition_hx_include
         if self.object and not self.duplicate_mode:
             kwargs["instance"] = self.object
         elif self.object and self.duplicate_mode:
@@ -6101,6 +6104,7 @@ class HorillaSingleFormView(FormView):
         context["modal_height_class"] = self.modal_height_class
         context["hx_attrs"] = {**default_hx_attrs, **(self.hx_attrs or {})}
         context["multi_step_url"] = self.get_multi_step_url()
+        context["condition_hx_include"] = self.condition_hx_include
         return context
 
     def get_form_url(self):

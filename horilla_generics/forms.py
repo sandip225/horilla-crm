@@ -736,6 +736,7 @@ class HorillaModelForm(forms.ModelForm):
         self.condition_fields = kwargs.pop("condition_fields", [])
         self.condition_model = kwargs.pop("condition_model", None)
         self.condition_field_choices = kwargs.pop("condition_field_choices", {})
+        self.condition_hx_include = kwargs.pop("condition_hx_include", "")
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
@@ -1100,7 +1101,7 @@ class HorillaModelForm(forms.ModelForm):
                         or field_name.replace("_", " ").title(),
                         widget=forms.TextInput(
                             attrs={
-                                "class": "text-color-600 p-2 placeholder:text-xs pr-[40px] w-full border border-dark-50 rounded-md mt-1 focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600",
+                                "class": "text-color-600 p-2 placeholder:text-xs pr-[40px] w-full border border-dark-50 rounded-md  focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600",
                                 "placeholder": _("Enter %(field)s")
                                 % {"field": field_name.replace("_", " ").title()},
                                 "id": f"id_{field_name}",
@@ -1114,7 +1115,7 @@ class HorillaModelForm(forms.ModelForm):
                         or field_name.replace("_", " ").title(),
                         widget=forms.NumberInput(
                             attrs={
-                                "class": "text-color-600 p-2 placeholder:text-xs pr-[40px] w-full border border-dark-50 rounded-md mt-1 focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600",
+                                "class": "text-color-600 p-2 placeholder:text-xs pr-[40px] w-full border border-dark-50 rounded-md  focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600",
                                 "placeholder": _("Enter %(field)s")
                                 % {"field": field_name.replace("_", " ").title()},
                                 "id": f"id_{field_name}",
@@ -1140,7 +1141,7 @@ class HorillaModelForm(forms.ModelForm):
                         or field_name.replace("_", " ").title(),
                         widget=forms.TextInput(
                             attrs={
-                                "class": "text-color-600 p-2 placeholder:text-xs pr-[40px] w-full border border-dark-50 rounded-md mt-1 focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600",
+                                "class": "text-color-600 p-2 placeholder:text-xs pr-[40px] w-full border border-dark-50 rounded-md  focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600",
                                 "placeholder": _("Enter %(field)s")
                                 % {"field": field_name.replace("_", " ").title()},
                                 "id": f"id_{field_name}",

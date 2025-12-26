@@ -314,7 +314,8 @@
                             class="text-primary-600 hover:text-primary-800 text-xs font-semibold px-2 py-1 bg-primary-300 rounded border border-primary-200 transition-colors"
                             hx-get="{{ add_condition_url }}&row_id=next"
                             hx-target="#condition-fields-container"
-                            hx-swap="beforeend">
+                            hx-swap="beforeend"
+                            {% if condition_hx_include %}hx-include="{{ condition_hx_include }}"{% endif %} >
                         + {% trans "Add More" %}
                     </button>
                     {% endif %}

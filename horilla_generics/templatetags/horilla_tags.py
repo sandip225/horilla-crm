@@ -547,12 +547,29 @@ def to_json(value):
     return json_module.dumps(value, ensure_ascii=False)
 
 
-@register.simple_tag
-def render_field_with_name(form, field_name, row_id=None, selected_value=None):
+@register.simple_tag(takes_context=True)
+def render_field_with_name(context, form, field_name, row_id=None, selected_value=None):
     """
     Custom template tag to render form field with modified name and id attributes.
     Usage: {% render_field_with_name form field_name row_id selected_value %}
     """
+    # Check if we have pre-generated value widget HTML (for automations and other apps)
+    if field_name == "value" and row_id is not None:
+        value_widget_html_key = f"value_widget_html_{row_id}"
+        value_widget_html = context.get(value_widget_html_key)
+        if value_widget_html:
+            return mark_safe(value_widget_html)
+        # If value widget HTML not found, fall back to default text input
+        # This ensures the value field always appears
+        if not form or field_name not in form.fields:
+            return mark_safe(
+                f'<input type="text" '
+                f'name="value_{row_id}" '
+                f'id="id_value_{row_id}" '
+                f'class="text-color-820 p-2 placeholder:text-xs pr-[40px] w-full border border-dark-50 rounded-md focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600" '
+                f'placeholder="Enter Value">'
+            )
+
     if form and field_name in form.fields:
         field = form[field_name]
         field_html = str(field)

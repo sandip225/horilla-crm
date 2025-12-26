@@ -8,7 +8,6 @@ from urllib.parse import urlencode, urlparse
 import pytz
 from django.apps import apps
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.core.paginator import Paginator
@@ -1396,7 +1395,7 @@ class GetFieldValueWidgetView(LoginRequiredMixin, View):
                name="value_{row_id}"
                id="id_value_{row_id}"
                value="{existing_value}"
-               class="text-color-820 p-2 placeholder:text-xs pr-[40px] w-full border border-dark-50 rounded-md mt-1 focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600"
+               class="text-color-820 p-2 placeholder:text-xs pr-[40px] w-full border border-dark-50 rounded-md  focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600"
                placeholder="Enter Value">
         """
 
@@ -1436,7 +1435,7 @@ class GetFieldValueWidgetView(LoginRequiredMixin, View):
                name="value_{row_id}"
                id="id_value_{row_id}"
                value="{existing_value}"
-               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md mt-1 focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600">
+               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md  focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600">
         """
 
     def _render_datetime_input(self, row_id, existing_value=""):
@@ -1445,7 +1444,7 @@ class GetFieldValueWidgetView(LoginRequiredMixin, View):
                name="value_{row_id}"
                id="id_value_{row_id}"
                value="{existing_value}"
-               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md mt-1 focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600">
+               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md  focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600">
         """
 
     def _render_time_input(self, row_id, existing_value=""):
@@ -1454,7 +1453,7 @@ class GetFieldValueWidgetView(LoginRequiredMixin, View):
                name="value_{row_id}"
                id="id_value_{row_id}"
                value="{existing_value}"
-               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md mt-1 focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600">
+               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md  focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600">
         """
 
     def _render_number_input(self, row_id, existing_value="", step="1"):
@@ -1464,7 +1463,7 @@ class GetFieldValueWidgetView(LoginRequiredMixin, View):
                id="id_value_{row_id}"
                value="{existing_value}"
                step="{step}"
-               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md mt-1 focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600"
+               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md  focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600"
                placeholder="Enter Number">
         """
 
@@ -1474,7 +1473,7 @@ class GetFieldValueWidgetView(LoginRequiredMixin, View):
                name="value_{row_id}"
                id="id_value_{row_id}"
                value="{existing_value}"
-               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md mt-1 focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600"
+               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md  focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600"
                placeholder="Enter Email">
         """
 
@@ -1484,7 +1483,7 @@ class GetFieldValueWidgetView(LoginRequiredMixin, View):
                name="value_{row_id}"
                id="id_value_{row_id}"
                value="{existing_value}"
-               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md mt-1 focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600"
+               class="text-color-600 p-2 placeholder:text-xs w-full border border-dark-50 rounded-md  focus-visible:outline-0 placeholder:text-dark-100 text-sm [transition:.3s] focus:border-primary-600"
                placeholder="Enter URL">
         """
 
