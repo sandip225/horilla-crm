@@ -54,7 +54,6 @@ def send_scheduled_mail_task(self, mail_id):
     """
     Celery task to send a scheduled mail using HorillaMailManager
     """
-    from django.contrib.auth import get_user_model
 
     from horilla_mail.models import HorillaMail
     from horilla_mail.services import HorillaMailManager
@@ -248,6 +247,7 @@ def send_mail_async(mail_id, context=None):
             context = {
                 "instance": mail.related_to,
                 "user": user,
+                "self": user,  # 'self' refers to the user who triggered (for template compatibility)
                 "active_company": company,
                 "request": mock_request,
             }
@@ -263,7 +263,15 @@ def send_mail_async(mail_id, context=None):
         return f"Mail {mail_id} not found"
 
     except Exception as e:
-        logger.error("Error sending mail %s: %s", mail_id, str(e))
+        logger.error("Error sending mail %s: %s", mail_id, str(e), exc_info=True)
+        # Try to update mail status
+        try:
+            mail = HorillaMail.objects.get(pk=mail_id)
+            mail.mail_status = "failed"
+            mail.mail_status_message = str(e)
+            mail.save(update_fields=["mail_status", "mail_status_message"])
+        except Exception:
+            pass
         return f"Failed to send mail {mail_id}: {str(e)}"
 
     finally:

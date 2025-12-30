@@ -2,7 +2,6 @@ from functools import cached_property
 
 from django.apps import apps
 from django.contrib import messages
-from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType

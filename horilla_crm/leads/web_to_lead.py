@@ -2,8 +2,6 @@ import json
 from urllib.parse import urlparse
 
 from django import forms
-from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
